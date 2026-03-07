@@ -200,8 +200,57 @@ function EditCell({value,onSave}){
   );
 }
 
+// ─── PASSWORD GATE ────────────────────────────────────────────────────────────
+const CORRECT_PASSWORD = "havefun1@";
+const SESSION_KEY = "cuuma_auth";
+
+function LoginScreen({ onSuccess }) {
+  const [pw, setPw] = useState("");
+  const [error, setError] = useState(false);
+  const [shake, setShake] = useState(false);
+
+  const attempt = () => {
+    if (pw === CORRECT_PASSWORD) {
+      sessionStorage.setItem(SESSION_KEY, "1");
+      onSuccess();
+    } else {
+      setError(true);
+      setShake(true);
+      setPw("");
+      setTimeout(() => setShake(false), 500);
+    }
+  };
+
+  return (
+    <div style={{background:C.bg,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'IBM Plex Mono','Fira Code',monospace"}}>
+      <style>{`@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}`}</style>
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:"48px 40px",width:360,textAlign:"center",animation:shake?"shake 0.4s ease":"none"}}>
+        <div style={{width:48,height:48,background:C.accent,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:20,color:"#fff",margin:"0 auto 20px"}}>C</div>
+        <div style={{fontWeight:700,fontSize:17,color:C.text,marginBottom:4}}>CUUMA OY</div>
+        <div style={{color:C.muted,fontSize:12,marginBottom:32}}>Board Financial Dashboard — FY2026</div>
+        <input
+          type="password"
+          placeholder="Enter password"
+          value={pw}
+          onChange={e=>{setPw(e.target.value);setError(false);}}
+          onKeyDown={e=>e.key==="Enter"&&attempt()}
+          autoFocus
+          style={{width:"100%",background:C.surfaceHigh,border:`1px solid ${error?C.red:C.border}`,borderRadius:8,padding:"12px 16px",color:C.text,fontSize:14,fontFamily:"inherit",outline:"none",marginBottom:12,textAlign:"center",letterSpacing:2}}
+        />
+        {error && <div style={{color:C.red,fontSize:12,marginBottom:12}}>Incorrect password</div>}
+        <button
+          onClick={attempt}
+          style={{width:"100%",background:C.accent,border:"none",borderRadius:8,padding:"12px",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+          Sign In
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function App(){
+  const [authed, setAuthed] = useState(!!sessionStorage.getItem(SESSION_KEY));
   const [data,setData]=useState(null);
   const [loading,setLoading]=useState(true);
   const [saving,setSaving]=useState(false);
@@ -209,6 +258,8 @@ export default function App(){
   const [editMode,setEditMode]=useState(false);
   const [selectedDept,setSelectedDept]=useState("All");
   const [toast,setToast]=useState(null);
+
+  if (!authed) return <LoginScreen onSuccess={() => setAuthed(true)} />;
 
   const showToast=(msg,type="ok")=>{setToast({msg,type});setTimeout(()=>setToast(null),2500);};
 
