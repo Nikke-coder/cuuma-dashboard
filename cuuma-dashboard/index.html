@@ -1,16 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cuuma Oy — Board Dashboard FY2026</title>
-    <style>
-      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-      body { background: #0f1117; }
-    </style>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-</html>
+import { createClient } from '@supabase/supabase-js'
+
+export const supabase = createClient(
+  'https://wzooguqwbuxepwkffwpp.supabase.co',
+  'sb_publishable_Tp7T9U_O6SDyG-066Oo5QA_DwdgTWQb'
+)
