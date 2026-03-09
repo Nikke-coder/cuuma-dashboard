@@ -32,7 +32,7 @@ const PASSWORD      = 'havefun1@';
 const SESSION_KEY   = 'cuuma_auth';
 const ACCENT        = '#60a5fa';
 const CLIENT_NAME   = 'Cuuma Communications Oy';
-const ALLOWED_EMAILS = ['teemu.sipila@cuuma.com'];
+const ALLOWED_EMAILS = ['teemu.sipila@cuuma.com', "niklas.isaksson@targetflow.fi"];
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const BLUE="#3b82f6",GREEN="#22c55e",AMBER="#f59e0b",RED="#f87171",PURPLE="#a78bfa",CYAN="#06b6d4",SLATE="#64748b";
