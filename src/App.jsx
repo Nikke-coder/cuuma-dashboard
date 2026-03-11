@@ -3071,6 +3071,7 @@ function AppWithAuth() {
   const goIn = async () => {
     try {
       const {data:{session}} = await supabase.auth.getSession();
+      console.log("SESSION:", session?.user?.email);
       if(!session){ setStage("login"); return; }
       const email = session.user?.email||"";
       if(!ALLOWED_EMAILS.includes(email)){
@@ -3078,9 +3079,10 @@ function AppWithAuth() {
         setStage("denied"); return;
       }
       const {data:aal} = await supabase.auth.mfa.getAuthenticatorAssuranceLevel().catch(()=>({data:null}));
+      console.log("AAL:", JSON.stringify(aal));
       if(aal?.nextLevel==="aal2" && aal?.currentLevel!=="aal2") setStage("mfa");
       else setStage("done");
-    } catch(e) { setStage("login"); }
+    } catch(e) { console.log("ERROR:", e); setStage("login"); }
   };
 
   if(stage==="denied") return (
