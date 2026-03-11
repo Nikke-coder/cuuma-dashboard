@@ -3071,6 +3071,13 @@ function AppWithAuth() {
   const goIn = async () => {
     try {
       const {data:{session}} = await supabase.auth.getSession();
+      const goIn = async () => {
+  try {
+    const {data:{session}} = await supabase.auth.getSession();
+    console.log("SESSION:", session?.user?.email);
+    const {data:aal} = await supabase.auth.mfa.getAuthenticatorAssuranceLevel().catch(()=>({data:null}));
+    console.log("AAL:", JSON.stringify(aal));
+    if(!session){ setStage("login"); return; }
       if(!session){ setStage("login"); return; }
       const email = session.user?.email||"";
       if(!ALLOWED_EMAILS.includes(email)){
