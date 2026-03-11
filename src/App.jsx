@@ -3068,20 +3068,20 @@ function MfaScreen({onVerified}) {
 function AppWithAuth() {
   const [stage, setStage] = React.useState("login");
 
- const goIn = async () => {
-  try {
-    const {data:{session}} = await supabase.auth.getSession();
-    if(!session){ setStage("login"); return; }
-    const email = session.user?.email||"";
-    if(!ALLOWED_EMAILS.includes(email)){
-      await supabase.auth.signOut();
-      setStage("denied"); return;
-    }
-    const {data:aal} = await supabase.auth.mfa.getAuthenticatorAssuranceLevel().catch(()=>({data:null}));
-    if(aal?.nextLevel==="aal2" && aal?.currentLevel!=="aal2") setStage("mfa");
-    else setStage("done");
-  } catch(e) { setStage("login"); }
-};
+  const goIn = async () => {
+    try {
+      const {data:{session}} = await supabase.auth.getSession();
+      if(!session){ setStage("login"); return; }
+      const email = session.user?.email||"";
+      if(!ALLOWED_EMAILS.includes(email)){
+        await supabase.auth.signOut();
+        setStage("denied"); return;
+      }
+      const {data:aal} = await supabase.auth.mfa.getAuthenticatorAssuranceLevel().catch(()=>({data:null}));
+      if(aal?.nextLevel==="aal2" && aal?.currentLevel!=="aal2") setStage("mfa");
+      else setStage("done");
+    } catch(e) { setStage("login"); }
+  };
 
   if(stage==="denied") return (
     <div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh",background:"#080b12"}}>
