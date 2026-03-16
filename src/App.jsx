@@ -2121,7 +2121,7 @@ function SettingsMenu({actData,actName,actLast,setActData,setActName,setActLast,
                   fontSize:9,fontFamily:"'DM Mono',monospace",color:"#4ade80",
                   textTransform:"uppercase",letterSpacing:"0.06em"}}>
                   <span style={{width:5,height:5,borderRadius:"50%",background:"#4ade80",display:"inline-block"}}/>
-                  Board member
+                  {userRole==="superuser"?"Superuser":userRole==="mainuser"?"Main user":"Board member"}
                 </div>
               </div>
             </div>
@@ -2340,7 +2340,7 @@ function SettingsMenu({actData,actName,actLast,setActData,setActName,setActLast,
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
               Billing & Credits
             </button>
-            {userRole==="mainuser"&&(
+            {(userRole==="mainuser"||userRole==="superuser")&&(
               <button onClick={()=>setView("members")}
                 style={{width:"100%",padding:"11px 20px",background:"transparent",border:"none",
                   borderTop:"1px solid #0f1e30",color:"#94a3b8",fontSize:12,cursor:"pointer",
@@ -2389,7 +2389,7 @@ function SettingsMenu({actData,actName,actLast,setActData,setActName,setActLast,
           )}
           {/* ── API Sync placeholder ── */}
           {/* Members — mainuser only */}
-          {userRole==="mainuser"&&(
+          {(userRole==="mainuser"||userRole==="superuser")&&(
             <div style={{borderTop:"1px solid #0f1e30",padding:"12px 20px"}}>
               <button onClick={()=>setView("members")}
                 style={{width:"100%",padding:"9px 12px",background:"#070c17",border:"1px solid #1e2d45",
@@ -3542,7 +3542,7 @@ function Dashboard() {
         const {data:member} = await supabase.from("dashboard_members")
           .select("*").eq("client",CLIENT_NAME).eq("email",email).maybeSingle();
         if(member) {
-          setUserRole(member.role || "member");
+          setUserRole(member.role || "mainuser");
           setMemberData(member);
         } else {
           setUserRole("mainuser"); // not in members table = original user = mainuser
