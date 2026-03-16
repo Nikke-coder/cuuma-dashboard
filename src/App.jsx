@@ -1,5 +1,29 @@
 import React from "react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect }
+
+const estBase = {
+  revenue:       [282350,277137,290000,281716,287989,293218,286674,301955,315478,323014,330560,337715],
+  cogs:          [-91824,-84105,-92800,-88472,-89184,-89902,-90626,-91356,-92092,-92824,-93561,-94306],
+  opex:          [-213927,-210424,-198398,-215964,-215620,-209495,-131856,-222415,-233808,-230442,-229666,-221053],
+  depAmort:      [-3415,-3654,-3654,-3654,-3654,-3654,-3654,-3654,-3654,-3654,-3654,-3654],
+  finExpenses:   [-1830,0,0,0,0,0,0,0,0,0,0,0],
+  tax:           [0,0,0,0,0,0,0,0,0,0,0,12351],
+  netProfit:     [-28645,-21046,-4852,-26375,-20469,-9832,60537,-15470,-14076,-3906,3678,31053],
+  grossProfit:   [190526,193032,197200,193244,198805,203316,196048,210599,223386,230190,236999,243409],
+  ebitda:        [-23401,-17392,-1198,-22720,-16815,-6179,64192,-11816,-10422,-252,7333,22356],
+  ebit:          [-26815,-21046,-4852,-26375,-20469,-9832,60537,-15470,-14076,-3906,3678,18702],
+  ebt:           [-28645,-21046,-4852,-26375,-20469,-9832,60537,-15470,-14076,-3906,3678,18702],
+  tangibles:     [205828,202413,198998,195583,192168,188753,185338,181923,178508,175093,171678,168263],
+  inventory:     [9748,9748,0,0,0,0,0,0,0,0,0,0],
+  receivables:   [392558,388262,0,0,0,0,0,0,0,0,0,0],
+  cash:          [99240,115915,113004,97179,84897,78998,115320,106038,97593,95249,97456,116088],
+  otherCA:       [199800,199800,0,0,0,0,0,0,0,0,0,0],
+  equity:        [246009,222108,217256,190881,170412,160580,221117,205647,191571,187665,191343,222396],
+  ltDebt:        [0,0,0,0,0,0,0,0,0,0,0,0],
+  stDebt:        [0,0,0,0,0,0,0,0,0,0,0,0],
+  payables:      [268668,283982,0,0,0,0,0,0,0,0,0,0],
+  otherCL:       [392497,410048,0,0,0,0,0,0,0,0,0,0],
+}; from "react";
 
 function useWindowWidth() {
   const [w, setW] = useState(window.innerWidth);
@@ -2878,11 +2902,12 @@ function ForecastTab({actuals,comp,compLabel,mode,setMode,S,E,fcRevData,fcEqData
     const newCogs  = scnItem==="cogs"        ? (actuals.cogs||[]).map(v=>v*multiplier)        : actuals.cogs;
     const newOpex  = scnItem==="opex"        ? (actuals.opex||[]).map(v=>v*multiplier)        : actuals.opex;
     const newFin   = scnItem==="finExpenses" ? (actuals.finExpenses||[]).map(v=>v*multiplier) : actuals.finExpenses;
-    const newGP    = (newRev||[]).map((v,i)=>v-(newCogs[i]||0));
-    const newEBIT  = newGP.map((v,i)=>v-(newOpex[i]||0));
-    const newEBIT2 = newEBIT.map((v,i)=>v-((actuals.depAmort||[])[i]||0));
-    const newEBT   = newEBIT2.map((v,i)=>v-(newFin[i]||0));
-    const newNet   = newEBT.map((v,i)=>v-((actuals.tax||[])[i]||0));
+    // cogs, opex, depAmort, finExpenses, tax are stored as negative values
+    const newGP    = (newRev||[]).map((v,i)=>v+(newCogs[i]||0));
+    const newEBIT  = newGP.map((v,i)=>v+(newOpex[i]||0));
+    const newEBIT2 = newEBIT.map((v,i)=>v+((actuals.depAmort||[])[i]||0));
+    const newEBT   = newEBIT2.map((v,i)=>v+(newFin[i]||0));
+    const newNet   = newEBT.map((v,i)=>v+((actuals.tax||[])[i]||0));
     return {...actuals,revenue:newRev,cogs:newCogs,opex:newOpex,finExpenses:newFin,
       grossProfit:newGP,ebitda:newEBIT,ebit:newEBIT2,ebt:newEBT,netProfit:newNet};
   },[actuals,scnItem,multiplier]);
@@ -3779,7 +3804,7 @@ function Dashboard() {
   const _consolidatedAct  = _buildConsolidated("act");
   const _consolidatedComp = _buildConsolidated(mode==="forecast"?"fc":"bud");
   const _rawAct  = (isGroup && _consolidatedAct)  ? _consolidatedAct  : actData||(DATA_BY_YEAR[year]||actBase);
-  const _rawComp = (isGroup && _consolidatedComp) ? _consolidatedComp : (mode==="forecast"?(fcData||csvData||budBase):(budData||csvData||budBase));
+  const _rawComp = (isGroup && _consolidatedComp) ? _consolidatedComp : (mode==="forecast"?(fcData||csvData||estBase):(budData||csvData||budBase));
   const Z12 = ()=>[0,0,0,0,0,0,0,0,0,0,0,0];
 
   // ── Consolidated = sum of all entity uploads + eliminations ──────────────
