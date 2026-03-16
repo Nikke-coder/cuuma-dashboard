@@ -2908,13 +2908,13 @@ function ForecastTab({actuals,comp,compLabel,mode,setMode,S,E,fcRevData,fcEqData
 
   const heatEbitda = STEPS.map(rp=>STEPS.map(op=>{
     const r=baseRev*(1+rp/100), o=baseOpex*(1+op/100);
-    return r-baseCogs-o;
+    return r+baseCogs+o; // cogs & opex are negative, so add them
   }));
 
   const heatEquity = STEPS.map(rp=>STEPS.map(op=>{
     const revChg = baseRev*(rp/100);
     const opxChg = baseOpex*(op/100);
-    const netImpact = (revChg - opxChg)*0.8;
+    const netImpact = revChg - opxChg; // pre-tax P&L impact on equity
     return baseEquity + netImpact;
   }));
 
@@ -3779,7 +3779,7 @@ function Dashboard() {
   const _consolidatedAct  = _buildConsolidated("act");
   const _consolidatedComp = _buildConsolidated(mode==="forecast"?"fc":"bud");
   const _rawAct  = (isGroup && _consolidatedAct)  ? _consolidatedAct  : actData||(DATA_BY_YEAR[year]||actBase);
-  const _rawComp = (isGroup && _consolidatedComp) ? _consolidatedComp : (mode==="forecast"?(fcData||csvData):(budData||csvData))||(DATA_BY_YEAR[year]||budBase);
+  const _rawComp = (isGroup && _consolidatedComp) ? _consolidatedComp : (mode==="forecast"?(fcData||csvData||budBase):(budData||csvData||budBase));
   const Z12 = ()=>[0,0,0,0,0,0,0,0,0,0,0,0];
 
   // ── Consolidated = sum of all entity uploads + eliminations ──────────────
@@ -4742,56 +4742,7 @@ function Dashboard() {
                 </div>
               )}
             </div>
-
-            {/* Monthly reporting deadlines */}
-            <div style={{background:"#0c1420",border:"1px solid #0f1e30",borderRadius:12,overflow:"hidden"}}>
-              <div style={{padding:"14px 22px",borderBottom:"1px solid #0f1e30",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <div style={{fontSize:13,fontWeight:600,color:"#94a3b8"}}>Monthly Reporting · {year}</div>
-                <div style={{fontSize:10,color:SLATE,fontFamily:"'DM Mono',monospace"}}>{notifications.filter(n=>n.submitted).length}/{notifications.length} submitted</div>
-              </div>
-              <div style={{padding:"8px 8px 12px"}}>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 180px 120px 80px",gap:0,padding:"6px 16px 8px",borderBottom:"1px solid #0f1e30"}}>
-                  {["Period","Due Date","Status","Done"].map((h,i)=>(
-                    <span key={i} style={{fontSize:9,fontFamily:"'DM Mono',monospace",color:"#334155",textTransform:"uppercase",letterSpacing:"0.08em",textAlign:i===3?"center":"left"}}>{h}</span>
-                  ))}
-                </div>
-                {MONTHS.map((month,mi)=>{
-                  const due      = mi<11 ? `${year}-${String(mi+2).padStart(2,"0")}-15` : `${parseInt(year)+1}-01-15`;
-                  const n        = notifications.find(n=>n.id===mi+1)||{id:mi+1,month,due,submitted:false};
-                  const today    = new Date();
-                  const dueDate  = new Date(n.due||due);
-                  const diffDays = Math.ceil((dueDate-today)/(1000*60*60*24));
-                  const isPast   = diffDays < 0;
-                  const isSoon   = diffDays >= 0 && diffDays <= 7;
-                  return (
-                    <div key={mi} style={{display:"grid",gridTemplateColumns:"1fr 180px 120px 80px",gap:0,alignItems:"center",
-                      padding:"10px 16px",borderRadius:8,marginBottom:2,
-                      background:n.submitted?"transparent":isSoon?"rgba(245,158,11,0.05)":"transparent",
-                      border:isSoon&&!n.submitted?"1px solid rgba(245,158,11,0.15)":"1px solid transparent"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:10}}>
-                        <div style={{width:6,height:6,borderRadius:"50%",flexShrink:0,background:n.submitted?GREEN:isPast?RED:isSoon?AMBER:"#1e2d45"}}/>
-                        <span style={{fontSize:13,color:n.submitted?SLATE:"#e2e8f0",fontWeight:n.submitted?400:500}}>{month} {year}</span>
-                      </div>
-                      <input type="date" value={n.due||due} onChange={e=>updateDue(mi+1,e.target.value)}
-                        style={{background:"transparent",border:"1px solid #1e2d45",borderRadius:6,padding:"4px 8px",
-                          color:n.submitted?SLATE:"#94a3b8",fontSize:11,fontFamily:"'DM Mono',monospace",outline:"none",cursor:"pointer",width:140}}/>
-                      <span style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:n.submitted?GREEN:isPast?RED:isSoon?AMBER:SLATE}}>
-                        {n.submitted?"✓ done":isPast?`${Math.abs(diffDays)}d overdue`:isSoon?`${diffDays}d left`:`in ${diffDays}d`}
-                      </span>
-                      <div style={{display:"flex",justifyContent:"center"}}>
-                        <div onClick={()=>{ const found=notifications.find(x=>x.id===mi+1); if(found){toggleSubmitted(mi+1);}else{setNotifications(prev=>[...prev,{id:mi+1,month,due:n.due||due,submitted:true}]);} }}
-                          style={{width:18,height:18,borderRadius:4,border:"1px solid "+(n.submitted?GREEN:"#1e2d45"),
-                            background:n.submitted?GREEN+"22":"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
-                          {n.submitted&&<span style={{fontSize:11,color:GREEN}}>✓</span>}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
+)}
 
       </div>
 
