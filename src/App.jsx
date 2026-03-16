@@ -923,55 +923,64 @@ function MembersPanel({supabase, currentUserEmail, credits, setCredits, customTa
     setInviteErr("");
     setInviting(true);
 
-    // Check credits
-    if(credits !== null && credits !== Infinity && (credits??0) < MEMBER_FEE_CR) {
-      setInviteErr(`Insufficient credits. Need ${MEMBER_FEE_CR} cr for first month.`);
-      setInviting(false); return;
+    try {
+      // Check not already member
+      if(members.find(m=>m.email===inviteEmail.trim())) {
+        setInviteErr("This email is already a member."); setInviting(false); return;
+      }
+
+      // Deduct credits (skip if unlimited or not loaded)
+      if(credits !== null && credits !== Infinity) {
+        if((credits??0) < MEMBER_FEE_CR) {
+          setInviteErr(`Insufficient credits. Need ${MEMBER_FEE_CR} cr for first month.`);
+          setInviting(false); return;
+        }
+        const newBal = (credits??0) - MEMBER_FEE_CR;
+        try {
+          await supabase.from("ai_credits").upsert(
+            {user_email:currentUserEmail, client:CLIENT_NAME, balance:newBal, updated_at:new Date().toISOString()},
+            {onConflict:"user_email"}
+          );
+          await supabase.from("ai_transactions").insert({
+            client:CLIENT_NAME, user_email:currentUserEmail,
+            credits:-MEMBER_FEE_CR, type:"usage",
+          });
+          setCredits(newBal);
+        } catch(credErr) {
+          console.warn("Credit deduction failed (non-fatal):", credErr);
+        }
+      }
+
+      // Create member record
+      const {data, error} = await supabase.from("dashboard_members").insert({
+        client:     CLIENT_NAME,
+        email:      inviteEmail.trim(),
+        role:       "member",
+        invited_by: currentUserEmail,
+        tab_access: DEFAULT_TABS,
+        shared_tabs:[],
+        active:     false,
+        fee_paid_at:new Date().toISOString(),
+      }).select().single();
+
+      if(error) {
+        console.error("dashboard_members insert error:", error);
+        setInviteErr("Error: "+error.message+(error.code?" ("+error.code+")":""));
+        setInviting(false); return;
+      }
+
+      // Create Supabase Auth invite (best-effort)
+      await supabase.auth.admin?.inviteUserByEmail?.(inviteEmail.trim()).catch(()=>{});
+
+      setMembers(prev=>[...prev, data]);
+      setInviteEmail("");
+      setInviting(false);
+
+    } catch(e) {
+      console.error("handleInvite error:", e);
+      setInviteErr("Unexpected error: "+e.message);
+      setInviting(false);
     }
-
-    // Check not already member
-    if(members.find(m=>m.email===inviteEmail.trim())) {
-      setInviteErr("This email is already a member."); setInviting(false); return;
-    }
-
-    // Deduct credits
-    if(credits !== Infinity) {
-      const newBal = (credits??0) - MEMBER_FEE_CR;
-      await supabase.from("ai_credits").upsert(
-        {user_email:currentUserEmail, client:CLIENT_NAME, balance:newBal, updated_at:new Date().toISOString()},
-        {onConflict:"user_email"}
-      );
-      await supabase.from("ai_transactions").insert({
-        client:CLIENT_NAME, user_email:currentUserEmail,
-        credits:-MEMBER_FEE_CR, type:"usage",
-      });
-      setCredits(newBal);
-    }
-
-    // Create member record
-    const {data, error} = await supabase.from("dashboard_members").insert({
-      client:     CLIENT_NAME,
-      email:      inviteEmail.trim(),
-      role:       "member",
-      invited_by: currentUserEmail,
-      tab_access: DEFAULT_TABS,
-      shared_tabs:[],
-      active:     false,
-      fee_paid_at:new Date().toISOString(),
-    }).select().single();
-
-    if(error) {
-      console.error("dashboard_members insert error:", error);
-      setInviteErr("Error: "+error.message+(error.code?" ("+error.code+")":""));
-      setInviting(false); return;
-    }
-
-    // Create Supabase Auth invite
-    await supabase.auth.admin?.inviteUserByEmail?.(inviteEmail.trim()).catch(()=>{});
-
-    setMembers(prev=>[...prev, data]);
-    setInviteEmail("");
-    setInviting(false);
   };
 
   const handleRemove = async (member) => {
