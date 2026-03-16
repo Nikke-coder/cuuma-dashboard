@@ -11,6 +11,14 @@ import { createClient } from "@supabase/supabase-js";
 const PROCOUNTOR_BASE = "https://api.procountor.com/api";
 const SANDBOX_BASE    = "https://api-test.procountor.com/api";
 
+// Two Supabase instances:
+// - appSupabase: app DB (wzooguqwbuxepwkffwpp) — stores accounting_connections, ai_credits etc.
+// - supabase: sync DB (jzqgndcrukggcwthxyrv) — stores client_snapshots
+const appSupabase = createClient(
+  "https://wzooguqwbuxepwkffwpp.supabase.co",
+  process.env.SUPABASE_APP_SERVICE_KEY || process.env.SUPABASE_SERVICE_KEY
+);
+
 const supabase = createClient(
   process.env.SUPABASE_URL || "https://jzqgndcrukggcwthxyrv.supabase.co",
   process.env.SUPABASE_SERVICE_KEY
@@ -32,7 +40,7 @@ async function getCredentials(client) {
   if(process.env.PROCOUNTOR_CLIENT_ID) {
     return { client_id: process.env.PROCOUNTOR_CLIENT_ID, client_secret: process.env.PROCOUNTOR_CLIENT_SECRET };
   }
-  const { data } = await supabase.from("accounting_connections")
+  const { data } = await appSupabase.from("accounting_connections")
     .select("credentials").eq("client", client).eq("system","procountor").maybeSingle();
   if(!data?.credentials) throw new Error("No Procountor credentials configured. Connect via Settings → Accounting System.");
   return {
