@@ -912,7 +912,10 @@ function MembersPanel({supabase, currentUserEmail, credits, setCredits, customTa
     if(!supabase) return;
     supabase.from("dashboard_members").select("*")
       .eq("client", CLIENT_NAME).order("created_at")
-      .then(({data})=>{ setMembers(data||[]); setLoading(false); });
+      .then(({data, error})=>{
+        if(error) console.error("dashboard_members load error:", error.message, error.code);
+        setMembers(data||[]); setLoading(false);
+      });
   },[]);
 
   const handleInvite = async () => {
@@ -921,7 +924,7 @@ function MembersPanel({supabase, currentUserEmail, credits, setCredits, customTa
     setInviting(true);
 
     // Check credits
-    if(credits !== Infinity && (credits??0) < MEMBER_FEE_CR) {
+    if(credits !== null && credits !== Infinity && (credits??0) < MEMBER_FEE_CR) {
       setInviteErr(`Insufficient credits. Need ${MEMBER_FEE_CR} cr for first month.`);
       setInviting(false); return;
     }
@@ -957,7 +960,11 @@ function MembersPanel({supabase, currentUserEmail, credits, setCredits, customTa
       fee_paid_at:new Date().toISOString(),
     }).select().single();
 
-    if(error) { setInviteErr("Error: "+error.message); setInviting(false); return; }
+    if(error) {
+      console.error("dashboard_members insert error:", error);
+      setInviteErr("Error: "+error.message+(error.code?" ("+error.code+")":""));
+      setInviting(false); return;
+    }
 
     // Create Supabase Auth invite
     await supabase.auth.admin?.inviteUserByEmail?.(inviteEmail.trim()).catch(()=>{});
@@ -1011,7 +1018,7 @@ function MembersPanel({supabase, currentUserEmail, credits, setCredits, customTa
           <div style={{fontSize:9,color:AMBER,fontFamily:"'DM Mono',monospace",
             background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.2)",
             borderRadius:5,padding:"2px 8px"}}>
-            €{members_only.length * 50}/mo
+            {members_only.length * MEMBER_FEE_CR} cr/mo
           </div>
         )}
       </div>
@@ -1104,6 +1111,7 @@ function MembersPanel({supabase, currentUserEmail, credits, setCredits, customTa
           Cost: <span style={{color:AMBER,fontWeight:600}}>{MEMBER_FEE_CR} cr/month</span> charged from your credit balance.
           Member gets their own credits for AI.
         </div>
+        {inviteErr&&<div style={{padding:"8px 10px",background:"rgba(244,63,94,0.08)",border:"1px solid rgba(244,63,94,0.25)",borderRadius:7,fontSize:11,color:"#f87171",fontFamily:"'DM Mono',monospace",marginBottom:8}}>{inviteErr}</div>}
         <div style={{display:"flex",gap:8}}>
           <input value={inviteEmail} onChange={e=>{setInviteEmail(e.target.value);setInviteErr("");}}
             placeholder="member@company.com"
