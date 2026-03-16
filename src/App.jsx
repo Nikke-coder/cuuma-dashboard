@@ -994,8 +994,22 @@ function MembersPanel({supabase, currentUserEmail, credits, setCredits, customTa
         setInviting(false); return;
       }
 
-      // Create Supabase Auth invite (best-effort)
-      await supabase.auth.admin?.inviteUserByEmail?.(inviteEmail.trim()).catch(()=>{});
+      // Send invite via backend (needs service role key)
+      try {
+        const invResp = await fetch("/api/invite-member", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email:       inviteEmail.trim(),
+            client:      CLIENT_NAME,
+            invited_by:  currentUserEmail,
+          }),
+        });
+        const invData = await invResp.json();
+        if (!invResp.ok) console.warn("Invite API warning:", invData.error);
+      } catch(invErr) {
+        console.warn("Invite send failed (non-fatal):", invErr.message);
+      }
 
       setMembers(prev=>[...prev, data]);
       setInviteEmail("");
