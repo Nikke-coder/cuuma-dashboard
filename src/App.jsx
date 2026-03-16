@@ -637,12 +637,12 @@ TONE: Decisive and strategic. No deep dives into accounting detail. End with a b
     setCredits(newBal);
   };
 
-  const SYSTEM = `You are EBITDA-9000, an AI financial advisor embedded in a board-level dashboard called Targetflow. When a role is active, you respond as that persona and sign off with their name.
+  const SYSTEM = `You are EBITDA-9000, an AI financial advisor embedded in a board-level dashboard called targetdash›. When a role is active, you respond as that persona and sign off with their name.
 
 CRITICAL — DATA RULES:
 1. This company's data (shown below) is the PRIMARY source. Every answer must be grounded in it.
 2. You may reference publicly available industry data (sector averages, published benchmarks, macroeconomic context) only to give this company's numbers context — never as the main point.
-3. You MUST NEVER reference, hint at, or use data from any other Targetflow client or any private company data. Treat other clients as if they do not exist.
+3. You MUST NEVER reference, hint at, or use data from any other targetdash› client or any private company data. Treat other clients as if they do not exist.
 4. If you don't have enough data to answer, say so — do not speculate or invent.
 
 ABSOLUTE RULES:
@@ -1170,7 +1170,7 @@ function AccountingConnect({supabase, onConnected}) {
   // Simple XOR obfuscation — not true encryption but prevents plain text storage
   // For production, use a Vercel Edge Function with proper encryption
   const obfuscate = (str) => {
-    const key = CLIENT_NAME + "targetflow2025";
+    const key = CLIENT_NAME + "targetdash2026";
     return btoa(str.split("").map((c,i)=>
       String.fromCharCode(c.charCodeAt(0)^key.charCodeAt(i%key.length))
     ).join(""));
@@ -1494,10 +1494,10 @@ function ApiSyncPanel({year, actLast, setActLast, setMode, onClose}) {
                     <div style={{width:6,height:6,borderRadius:"50%",background:AMBER}}/>
                     <span style={{fontSize:11,color:"#94a3b8"}}>API Key</span>
                   </div>
-                  <span style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:AMBER}}>Targetflow Dashboard key needed</span>
+                  <span style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:AMBER}}>targetdash› API key needed</span>
                 </div>
                 <div style={{fontSize:9,color:"#1e2d45",fontFamily:"'DM Mono',monospace",lineHeight:1.6}}>
-                  To connect: create an API key called "Targetflow Dashboard" in your {source==="procountor"?"Procountor":"Netvisor"} settings, then set it in the dashboard config. See setup guide →
+                  To connect: create an API key called "targetdash› API key" in your {source==="procountor"?"Procountor":"Netvisor"} settings, then set it in the dashboard config. See setup guide →
                 </div>
               </div>
             )}
@@ -1778,10 +1778,10 @@ function codeToMapping(code) {
   return null;
 }
 
-// ── Targetflow Import Template parser ────────────────────────────────────────
+// ── targetdash› Import Template parser ────────────────────────────────────────
 // Reads the structured template format (row 3 = metadata, row 6 = month headers,
 // row 7 = year headers, rows 8+ = account data).
-function parseTargetflowTemplate(wb, entities) {
+function parseTargetdashTemplate(wb, entities) {
   const XL = window.XLSX;
   const ws = wb.Sheets[wb.SheetNames[0]];
   const rows = XL.utils.sheet_to_json(ws, {header:1, defval:""});
@@ -2239,20 +2239,20 @@ function SettingsMenu({actData,actName,actLast,setActData,setActName,setActLast,
               const hoverBg= isAct ? "#0c1e35" : isElim ? "#180d2e" : "#1a0e00";
               const loadC  = isAct ? "#4ade80" : isElim ? "#a78bfa" : AMBER;
               const onDrop = isAct
-                ? e=>{e.preventDefault();setDragOverA(false);parseFile(e.dataTransfer.files[0],true);}
+                ? e=>{e.preventDefault();setDragOverA(false);parseCSV(e.dataTransfer.files[0],true);}
                 : isElim
                 ? e=>{e.preventDefault();setDragOver(false);parseElimFile(e.dataTransfer.files[0]);}
-                : e=>{e.preventDefault();setDragOver(false);parseFile(e.dataTransfer.files[0],false);};
+                : e=>{e.preventDefault();setDragOver(false);parseCSV(e.dataTransfer.files[0],false);};
               const onOver = isAct
                 ? e=>{e.preventDefault();setDragOverA(true);}
                 : e=>{e.preventDefault();setDragOver(true);};
               const onLeave= isAct ? ()=>setDragOverA(false) : ()=>setDragOver(false);
               const ref_   = isAct ? fileRefA : isElim ? fileRefE : fileRef;
               const onChange=isAct
-                ? e=>parseFile(e.target.files[0],true)
+                ? e=>parseCSV(e.target.files[0],true)
                 : isElim
                 ? e=>parseElimFile(e.target.files[0])
-                : e=>parseFile(e.target.files[0],false);
+                : e=>parseCSV(e.target.files[0],false);
               return (
                 <div style={{border:"1px dashed "+baseC,borderRadius:8,padding:"11px 14px",
                   display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",
@@ -2589,7 +2589,7 @@ function CustomTab({slot, userEmail, actData, csvData, glData, actLast, year, S,
         headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
         body:JSON.stringify({
           model:"claude-sonnet-4-20250514", max_tokens:1200,
-          system:`You are a financial data analyst embedded in a private board dashboard called Targetflow.
+          system:`You are a financial data analyst embedded in a private board dashboard called targetdash›.
 
 CRITICAL DATA RULES:
 1. Use ONLY the financial data provided below.
@@ -3621,7 +3621,7 @@ function Dashboard() {
             // Footer
             pdf.setFontSize(6.5); pdf.setTextColor(30,45,69);
             const today = new Date().toLocaleDateString("fi-FI");
-            pdf.text("Generated "+today+" · Targetflow Board Dashboard · "+clientName, PW/2, PH-3, {align:"center"});
+            pdf.text("Generated "+today+" · targetdash› · "+clientName, PW/2, PH-3, {align:"center"});
             const mg=5, top=15, avW=PW-mg*2, avH=PH-top-mg;
             const sc=Math.min(avW/c.w, avH/c.h);
             const dW=c.w*sc, dH=c.h*sc, x=mg+(avW-dW)/2, y=top+(avH-dH)/2;
@@ -3884,7 +3884,7 @@ function Dashboard() {
     {key:"ltDebt",label:"lt_debt"},{key:"stDebt",label:"st_debt"},{key:"otherCL",label:"other_cl"},
   ];
 
-  // ── Download Targetflow Import Template ───────────────────────────────────
+  // ── Download targetdash› Import Template ───────────────────────────────────
   const downloadTemplate = (type) => {
     if(type === "ELIM") {
       const a = document.createElement("a");
@@ -3982,7 +3982,7 @@ function Dashboard() {
     reader.onload = (e) => {
       try {
         const wb = window.XLSX.read(new Uint8Array(e.target.result),{type:"array"});
-        const tr = parseTargetflowTemplate(wb, entities);
+        const tr = parseTargetdashTemplate(wb, entities);
         if(!tr||!tr.data){ showMsg("Could not parse Elimination file — check file format",true); return; }
         if(!confirmOverwrite(false, tr.fileYear||year)) return;
         setElimData(tr.data);
@@ -4002,7 +4002,7 @@ function Dashboard() {
       const wb=XL.utils.book_new();
       const inputRows=[];
       // Header
-      inputRows.push(["Targetflow — "+compLabel+" template — "+year,...Array(13).fill("")]);
+      inputRows.push(["targetdash› — "+compLabel+" template — "+year,...Array(13).fill("")]);
       inputRows.push(["Account Code","Account Name","Model Line",...MONTHS,"Full Year"]);
       // Group by section
       const SECTIONS=[
@@ -4023,7 +4023,7 @@ function Dashboard() {
       }
       // Instructions sheet
       const instrRows=[
-        ["Targetflow Budget/Forecast Template"],[""],
+        ["targetdash› Budget/Forecast Template"],[""],
         ["1. Fill monthly budget values for each account (column D–O)"],
         ["2. Amounts in euros — same sign as your actuals export"],
         ["3. Do NOT change account codes or column order"],
@@ -4041,20 +4041,20 @@ function Dashboard() {
       wsHelp["!cols"]=[{wch:70}];
       XL.utils.book_append_sheet(wb,wsIn,"Budget Input");
       XL.utils.book_append_sheet(wb,wsHelp,"Instructions");
-      XL.writeFile(wb,"targetflow_"+compLabel.toLowerCase()+"_"+year+".xlsx");
+      XL.writeFile(wb,"targetdash_"+compLabel.toLowerCase()+"_"+year+".xlsx");
     } else {
       // Fallback: CSV
       const hdr=["field",...MONTHS].join(",");
       const rows=CSV_FIELDS.map(f=>[f.label,...(comp[f.key]||Array(12).fill(0)).map(v=>Math.round(v))].join(","));
-      const csv=["# Targetflow "+compLabel+" Template — "+year,hdr,...rows].join("\n");
-      const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="targetflow_"+compLabel.toLowerCase()+"_"+year+".csv";a.click();
+      const csv=["# targetdash› "+compLabel+" Template — "+year,hdr,...rows].join("\n");
+      const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="targetdash_"+compLabel.toLowerCase()+"_"+year+".csv";a.click();
     }
   };
   const exportActCSV=()=>{
     const hdr=["field",...MONTHS].join(",");
     const rows=CSV_FIELDS.map(f=>[f.label,...(actuals[f.key]||Array(12).fill(0)).map(v=>Math.round(v))].join(","));
-    const csv=["# Targetflow Actuals — "+year,"# actuals_last: last confirmed month 1-12",hdr,"actuals_last,"+(actLast+1)+",0,0,0,0,0,0,0,0,0,0,0",...rows].join("\n");
-    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="targetflow_actuals_"+year+".csv";a.click();
+    const csv=["# targetdash› Actuals — "+year,"# actuals_last: last confirmed month 1-12",hdr,"actuals_last,"+(actLast+1)+",0,0,0,0,0,0,0,0,0,0,0",...rows].join("\n");
+    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="targetdash_actuals_"+year+".csv";a.click();
   };
 
   // ── FX Conversion ─────────────────────────────────────────────────────────
@@ -4135,14 +4135,14 @@ function Dashboard() {
         try{
           const wb=window.XLSX.read(ev.target.result,{type:"array"});
 
-          // ── Try Targetflow template format first ──────────────────────────
+          // ── Try targetdash› template format first ──────────────────────────
           const firstWs = wb.Sheets[wb.SheetNames[0]];
           const firstRows = window.XLSX.utils.sheet_to_json(firstWs,{header:1,defval:""});
           const metaStr = String((firstRows[4]||[])[0]||"");
           const isTfTemplate = metaStr.includes("type:") && metaStr.includes("year:") && metaStr.includes("[");
 
           if(isTfTemplate){
-            const tr = parseTargetflowTemplate(wb, entities);
+            const tr = parseTargetdashTemplate(wb, entities);
             if(!tr){ setUploadMsg({text:"Template read failed — check file format",err:true}); return; }
             if(tr.companyWarning){
               const proceed = window.confirm("⚠️ Yhtiövaroitus\n\n" + tr.companyWarning + "\n\nJatketaanko silti?");
@@ -4222,11 +4222,13 @@ function Dashboard() {
           const cols=lines[hIdx].split(",").map(c=>c.trim().toLowerCase());
           const mCols=MONTHS.map(m=>cols.indexOf(m.toLowerCase()));
           const parsed={};let newLast=actLast;
-          for(let i=hIdx+1;i<lines.length;i++){
+          // Scan ALL lines (before and after header) for actuals_last
+          for(let i=0;i<lines.length;i++){
             const parts=lines[i].split(",");
             const fname=parts[0]&&parts[0].trim().toLowerCase();
             if(!fname) continue;
             if(isAct&&fname==="actuals_last"){const v=parseInt(parts[1]);if(!isNaN(v)&&v>=1&&v<=12)newLast=v-1;continue;}
+            if(i<=hIdx) continue; // skip header and pre-header rows for data
             const match=CSV_FIELDS.find(f=>f.label===fname);
             if(!match) continue;
             parsed[match.key]=mCols.map(ci=>{if(ci===-1)return 0;const v=parseFloat(parts[ci]);return isNaN(v)?0:v;});
@@ -4234,7 +4236,23 @@ function Dashboard() {
           const base=isAct?actBase:budBase;
           const result={...base,...parsed};
           if(parsed.revenue&&parsed.cogs) result.grossProfit=parsed.revenue.map((v,i)=>v-(parsed.cogs[i]||0));
-          if(isAct){setActData(result);setActLast(newLast);}else setCsvData(result);
+          // Extract year from comment line if present (# type:ACT  year:2024)
+          const metaLine=ev.target.result.split("\n").find(l=>l.includes("year:"));
+          const yearMatch=metaLine&&metaLine.match(/year:(\d{4})/);
+          const csvYear=yearMatch?parseInt(yearMatch[1]):parseInt(year);
+          if(isAct){
+            if(!confirmOverwrite(true,csvYear)) return;
+            setActData(result);setActLast(newLast);
+            writeSnapshot(result,newLast,csvYear,{actName:file.name});
+            setUploadMsg({text:"✓ ACT loaded — "+file.name,err:false});
+          } else {
+            if(!confirmOverwrite(false,csvYear)) return;
+            setCsvData(result);setCsvName(file.name);
+            const newMode=ev.target.result.includes("type:EST")||ev.target.result.includes("type:FC")?"forecast":"budget";
+            setMode(newMode);
+            if(supabase){supabase.from("client_snapshots").upsert({client:CLIENT_NAME,csv_data:JSON.stringify(result),csv_name:file.name,mode:newMode,updated_at:new Date().toISOString()},{onConflict:"client"}).catch(e=>console.warn(e));}
+            setUploadMsg({text:"✓ "+(newMode==="forecast"?"FC":"BUD")+" loaded — "+file.name,err:false});
+          }
         }catch(err){ setUploadMsg({text:"CSV error: "+err.message,err:true}); }
       };
       r.readAsText(file);
@@ -4346,7 +4364,7 @@ function Dashboard() {
           </div>
           <div>
             <div style={{fontSize:14,fontWeight:600}}>{CLIENT_NAME}</div>
-            <div style={{fontSize:10,color:"#334155",fontFamily:"'DM Mono',monospace"}}>Financial Dashboard · {year}</div>
+            <div style={{fontSize:10,color:"#334155",fontFamily:"'DM Mono',monospace"}}>targetdash› · {year}</div>
           </div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
@@ -4976,9 +4994,10 @@ function LoginScreen({onLogin}) {
         <div className="login-card-inner">
           {/* Logo */}
           <div style={{textAlign:"center",marginBottom:32}}>
-            <img src="https://y-lehti.fi/wp-content/uploads/2024/09/logo_tf-1024x293.png"
-              alt="Targetflow"
-              style={{width:160,marginBottom:14,filter:"brightness(0) invert(1)",opacity:0.95}}/>
+            <svg viewBox="0 0 220 40" xmlns="http://www.w3.org/2000/svg" style={{width:160,marginBottom:14}}>
+                  <text x="0" y="30" fontFamily="'DM Mono',monospace" fontSize="26" fontWeight="700" fill="white" opacity="0.95">targetdash</text>
+                  <text x="162" y="30" fontFamily="'DM Mono',monospace" fontSize="26" fontWeight="700" fill={ACCENT}>›</text>
+                </svg>
             <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
               <div style={{width:6,height:6,borderRadius:"50%",background:ACCENT,boxShadow:`0 0 8px ${ACCENT}`}}/>
               <span style={{fontSize:12,color:"rgba(96,165,250,0.8)",fontFamily:"'DM Mono',monospace",letterSpacing:"0.06em"}}>
@@ -5047,7 +5066,7 @@ function LoginScreen({onLogin}) {
             <div style={{width:5,height:5,borderRadius:"50%",background:"#22c55e",
               boxShadow:"0 0 6px #22c55e"}}/>
             <span style={{fontSize:10,color:"rgba(100,116,139,0.6)",fontFamily:"'DM Mono',monospace"}}>
-              Secured · Targetflow v2
+              targetdash › v3
             </span>
           </div>
         </div>
