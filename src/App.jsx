@@ -84,7 +84,7 @@ const actBase = {
   stDebt:        [0,0,0,0,0,0,0,0,0,0,0,0],
   payables:      [240655,292238,224710,189038,209472,173021,144587,201805,175685,186538,223159,178733],
   otherCL:       [332333,369887,397547,402496,396505,386562,329139,344230,376871,372771,362533,395432],
-};;;
+};;
 const budBase = {
   revenue:       [264308,270225,275353,281716,287989,293218,286674,301955,315478,323014,330560,337715],
   cogs:          [-83622,-84105,-84766,-85472,-86184,-86902,-87626,-88356,-89092,-89824,-90561,-91306],
@@ -107,7 +107,7 @@ const budBase = {
   stDebt:        [0,0,0,0,0,0,0,0,0,0,0,0],
   payables:      [178733,178733,178733,178733,178733,178733,178733,178733,178733,178733,178733,178733],
   otherCL:       [395432,395432,395432,395432,395432,395432,395432,395432,395432,395432,395432,395432],
-};;;
+};;
 
 
 const DATA_BY_YEAR = {
@@ -331,9 +331,9 @@ function BillingView({clientName, supabase, onClose, userEmail=""}) {
   const STRIPE_KEY = "PASTE_STRIPE_PUBLISHABLE_KEY";
 
   const PACKAGES = [
-    {id:"spark",   name:"Spark",   credits:200,  price:"€10", priceId:"price_spark_10eur",   desc:"200 questions",  color:"#60a5fa"},
-    {id:"insight", name:"Insight", credits:400,  price:"€20", priceId:"price_insight_20eur", desc:"400 questions",  color:"#a78bfa"},
-    {id:"oracle",  name:"Oracle",  credits:1000, price:"€50", priceId:"price_oracle_50eur",  desc:"1 000 questions",color:"#2dd4bf"},
+    {id:"spark",   name:"Spark",   credits:200,  price:"€8" , priceId:"price_spark_10eur",   desc:"200 questions",  color:"#60a5fa"},
+    {id:"insight", name:"Insight", credits:400,  price:"€16", priceId:"price_insight_20eur", desc:"400 questions",  color:"#a78bfa"},
+    {id:"oracle",  name:"Oracle",  credits:1000, price:"€40", priceId:"price_oracle_50eur",  desc:"1 000 questions",color:"#2dd4bf"},
   ];
 
   React.useEffect(()=>{
@@ -349,7 +349,7 @@ function BillingView({clientName, supabase, onClose, userEmail=""}) {
       setHistory(tx || []);
       setInvoices((tx||[]).filter(t=>t.type==="purchase"&&t.package&&t.package!=="manual").map(t=>({
         ...t,
-        amount: t.package==="spark"?"€10":t.package==="insight"?"€20":t.package==="oracle"?"€50":"—",
+        amount: t.package==="spark"?"€8":t.package==="insight"?"€16":t.package==="oracle"?"€40":"—",
         credits: t.credits,
         receipt_url: t.receipt_url||null,
       })));
@@ -375,6 +375,7 @@ function BillingView({clientName, supabase, onClose, userEmail=""}) {
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({package: pkg.id, client: clientName, user_email: userEmail}),
       });
+      if(!resp.ok){let e="Server error "+resp.status;try{const j=await resp.json();e=j.error||e;}catch(_){}throw new Error(e);}
       const {url} = await resp.json();
       if(url) window.open(url, "_blank");
       else alert("Could not start checkout. Please try again.");
@@ -506,7 +507,7 @@ function BillingView({clientName, supabase, onClose, userEmail=""}) {
         </div>
 
         <div style={{marginTop:8,padding:"10px 12px",background:"rgba(99,102,241,0.06)",border:"1px solid rgba(99,102,241,0.2)",borderRadius:8}}>
-          <div style={{fontSize:10,color:"#6366f1",fontFamily:"'DM Mono',monospace"}}>ℹ Credits never expire · Secure payment via Stripe · ALV 25.5% sis.</div>
+          <div style={{fontSize:10,color:"#6366f1",fontFamily:"'DM Mono',monospace"}}>ℹ Credits never expire · Secure payment via Stripe · VAT 0%</div>
         </div>
       </div>
     </div>
@@ -921,7 +922,7 @@ function MembersPanel({supabase, currentUserEmail, credits, setCredits, customTa
 
     // Check credits
     if(credits !== Infinity && (credits??0) < MEMBER_FEE_CR) {
-      setInviteErr(`Insufficient credits. Need ${MEMBER_FEE_CR} cr (€50) for first month.`);
+      setInviteErr(`Insufficient credits. Need ${MEMBER_FEE_CR} cr for first month.`);
       setInviting(false); return;
     }
 
@@ -1100,7 +1101,7 @@ function MembersPanel({supabase, currentUserEmail, credits, setCredits, customTa
       <div style={{padding:"12px 14px",background:"rgba(10,14,26,0.8)",border:"1px solid #1e2d45",borderRadius:9}}>
         <div style={{fontSize:10,color:SLATE,fontFamily:"'DM Mono',monospace",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Invite member</div>
         <div style={{fontSize:10,color:"#475569",marginBottom:10}}>
-          Cost: <span style={{color:AMBER,fontWeight:600}}>{MEMBER_FEE_CR} cr/month (€50)</span> charged from your credit balance.
+          Cost: <span style={{color:AMBER,fontWeight:600}}>{MEMBER_FEE_CR} cr/month</span> charged from your credit balance.
           Member gets their own credits for AI.
         </div>
         <div style={{display:"flex",gap:8}}>
@@ -2240,20 +2241,20 @@ function SettingsMenu({actData,actName,actLast,setActData,setActName,setActLast,
               const hoverBg= isAct ? "#0c1e35" : isElim ? "#180d2e" : "#1a0e00";
               const loadC  = isAct ? "#4ade80" : isElim ? "#a78bfa" : AMBER;
               const onDrop = isAct
-                ? e=>{e.preventDefault();setDragOverA(false);parseFile(e.dataTransfer.files[0],true);}
+                ? e=>{e.preventDefault();setDragOverA(false);parseCSV(e.dataTransfer.files[0],true);}
                 : isElim
                 ? e=>{e.preventDefault();setDragOver(false);parseElimFile(e.dataTransfer.files[0]);}
-                : e=>{e.preventDefault();setDragOver(false);parseFile(e.dataTransfer.files[0],false);};
+                : e=>{e.preventDefault();setDragOver(false);parseCSV(e.dataTransfer.files[0],false);};
               const onOver = isAct
                 ? e=>{e.preventDefault();setDragOverA(true);}
                 : e=>{e.preventDefault();setDragOver(true);};
               const onLeave= isAct ? ()=>setDragOverA(false) : ()=>setDragOver(false);
               const ref_   = isAct ? fileRefA : isElim ? fileRefE : fileRef;
               const onChange=isAct
-                ? e=>parseFile(e.target.files[0],true)
+                ? e=>parseCSV(e.target.files[0],true)
                 : isElim
                 ? e=>parseElimFile(e.target.files[0])
-                : e=>parseFile(e.target.files[0],false);
+                : e=>parseCSV(e.target.files[0],false);
               return (
                 <div style={{border:"1px dashed "+baseC,borderRadius:8,padding:"11px 14px",
                   display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",
@@ -3536,6 +3537,10 @@ function Dashboard() {
   const [mode,        setMode]       = useState("budget");
   const [csvData,     setCsvData]    = useState(null);
   const [csvName,     setCsvName]    = useState(null);
+  const [budData,     setBudData]    = useState(null);
+  const [budName,     setBudName]    = useState(null);
+  const [fcData,      setFcData]     = useState(null);
+  const [fcName,      setFcName]     = useState(null);
   const [actData,     setActData]    = useState(null);
   const [glData,      setGlData]     = useState(null);
   const [userRole,    setUserRole]   = useState("mainuser"); // "mainuser" | "member"
@@ -3746,7 +3751,7 @@ function Dashboard() {
   const _consolidatedAct  = _buildConsolidated("act");
   const _consolidatedComp = _buildConsolidated(mode==="forecast"?"fc":"bud");
   const _rawAct  = (isGroup && _consolidatedAct)  ? _consolidatedAct  : actData||(DATA_BY_YEAR[year]||actBase);
-  const _rawComp = (isGroup && _consolidatedComp) ? _consolidatedComp : csvData||(DATA_BY_YEAR[year]||budBase);
+  const _rawComp = (isGroup && _consolidatedComp) ? _consolidatedComp : (mode==="forecast"?(fcData||csvData):(budData||csvData))||(DATA_BY_YEAR[year]||budBase);
   const Z12 = ()=>[0,0,0,0,0,0,0,0,0,0,0,0];
 
   // ── Consolidated = sum of all entity uploads + eliminations ──────────────
@@ -3954,7 +3959,11 @@ function Dashboard() {
         if(s.gl_data)   { try{ const d=JSON.parse(s.gl_data);   setGlData(d);   }catch(e){} }
         if(s.act_name)  setActName(s.act_name);
         if(s.act_last!=null) setActLast(s.act_last);
-        if(s.csv_data)  { try{ const d=JSON.parse(s.csv_data);  setCsvData(d);  }catch(e){} }
+        if(s.csv_data)  { try{ const d=JSON.parse(s.csv_data);
+          setCsvData(d);
+          if(s.mode==="forecast"){setFcData(d);if(s.csv_name)setFcName(s.csv_name);}
+          else{setBudData(d);if(s.csv_name)setBudName(s.csv_name);}
+        }catch(e){} }
         if(s.csv_name)  setCsvName(s.csv_name);
         if(s.mode)      setMode(s.mode);
         if(s.year)      setYear(s.year);
@@ -4182,7 +4191,9 @@ function Dashboard() {
                 setMode(newMode);
                 setUploadMsg({text:"✓ "+tr.fileType+" → "+((entities||[]).find(e=>e.id===uploadEntity)||{name:uploadEntity}).name+" — "+file.name,err:false});
               } else {
-                setCsvData(data); setCsvName(file.name);
+                if(newMode==="forecast"){setFcData(data);setFcName(file.name);}
+                else{setBudData(data);setBudName(file.name);}
+                setCsvData(data);setCsvName(file.name);
                 setMode(newMode);
                 setUploadMsg({text:"✓ "+tr.fileType+" loaded — "+file.name,err:false});
               }
@@ -4205,6 +4216,8 @@ function Dashboard() {
             writeSnapshot(merged, newLast, year, {actName:file.name});
           } else {
             if(!confirmOverwrite(false, year)) return;
+            if(mode==="forecast"){setFcData(merged);setFcName(file.name);}
+            else{setBudData(merged);setBudName(file.name);}
             setCsvData(merged);
             if(supabase){ supabase.from("client_snapshots").upsert({client:CLIENT_NAME,csv_data:JSON.stringify(merged),csv_name:file.name,mode,updated_at:new Date().toISOString()},{onConflict:"client"}).catch(e=>console.warn(e)); }
           }
@@ -4223,11 +4236,12 @@ function Dashboard() {
           const cols=lines[hIdx].split(",").map(c=>c.trim().toLowerCase());
           const mCols=MONTHS.map(m=>cols.indexOf(m.toLowerCase()));
           const parsed={};let newLast=actLast;
-          for(let i=hIdx+1;i<lines.length;i++){
+          for(let i=0;i<lines.length;i++){
             const parts=lines[i].split(",");
             const fname=parts[0]&&parts[0].trim().toLowerCase();
             if(!fname) continue;
             if(isAct&&fname==="actuals_last"){const v=parseInt(parts[1]);if(!isNaN(v)&&v>=1&&v<=12)newLast=v-1;continue;}
+            if(i<=hIdx) continue;
             const match=CSV_FIELDS.find(f=>f.label===fname);
             if(!match) continue;
             parsed[match.key]=mCols.map(ci=>{if(ci===-1)return 0;const v=parseFloat(parts[ci]);return isNaN(v)?0:v;});
@@ -4235,7 +4249,23 @@ function Dashboard() {
           const base=isAct?actBase:budBase;
           const result={...base,...parsed};
           if(parsed.revenue&&parsed.cogs) result.grossProfit=parsed.revenue.map((v,i)=>v-(parsed.cogs[i]||0));
-          if(isAct){setActData(result);setActLast(newLast);}else setCsvData(result);
+          const metaLine=ev.target.result.split("\n").find(l=>l.includes("year:"));
+          const yearMatch=metaLine&&metaLine.match(/year:(\d{4})/);
+          const csvYear=yearMatch?parseInt(yearMatch[1]):parseInt(year);
+          if(isAct){
+            if(!confirmOverwrite(true,csvYear)) return;
+            setActData(result);setActLast(newLast);
+            writeSnapshot(result,newLast,csvYear,{actName:file.name});
+            setUploadMsg({text:"✓ ACT loaded — "+file.name,err:false});
+          } else {
+            if(!confirmOverwrite(false,csvYear)) return;
+            const newMode=ev.target.result.includes("type:EST")||ev.target.result.includes("type:FC")?"forecast":"budget";
+            if(newMode==="forecast"){setFcData(result);setFcName(file.name);}
+            else{setBudData(result);setBudName(file.name);}
+            setCsvData(result);setMode(newMode);
+            if(supabase){supabase.from("client_snapshots").upsert({client:CLIENT_NAME,csv_data:JSON.stringify(result),csv_name:file.name,mode:newMode,updated_at:new Date().toISOString()},{onConflict:"client"}).catch(e=>console.warn(e));}
+            setUploadMsg({text:"✓ "+(newMode==="forecast"?"FC":"BUD")+" loaded — "+file.name,err:false});
+          }
         }catch(err){ setUploadMsg({text:"CSV error: "+err.message,err:true}); }
       };
       r.readAsText(file);
@@ -4316,8 +4346,8 @@ function Dashboard() {
     {label:"  Δ ST debt",                     aa:cfDST,          color:SLATE,      indent:true},
     {label:"FINANCING CASHFLOW",               aa:cfFin,          color:"#94a3b8",  bold:true},
     {label:"NET CASH CHANGE",                  aa:netCFArr,       color:BLUE,       bold:true},
-    {label:"Opening cash",                     aa:openCash,       color:SLATE},
-    {label:"CLOSING CASH BALANCE",             aa:closCash,       color:CYAN,       bold:true},
+    {label:"Opening cash",                     aa:openCash,       color:SLATE,      noSum:true,sumFn:"first"},
+    {label:"CLOSING CASH BALANCE",             aa:closCash,       color:CYAN,       bold:true,  noSum:true,sumFn:"last"},
   ];
   const totOp =sum(sl(cfOp, S,E));
   const totInv=sum(sl(cfInv,S,E));
@@ -4591,7 +4621,9 @@ function Dashboard() {
                   <tbody>
                     {cfTbl.map((row,ri)=>{
                       const sliced=sl(row.aa,S,E);
-                      const total=sum(sliced);
+                      const total=row.noSum
+                        ?(row.sumFn==="first"?(sliced[0]||0):(sliced[sliced.length-1]||0))
+                        :sum(sliced);
                       const labelPad = row.indent ? "7px 20px 7px 36px" : "7px 20px";
                       const rowBg    = row.bold ? "rgba(255,255,255,0.02)" : "transparent";
                       const topBorder = row.bold ? "1px solid #1e2d45" : "1px solid #080f1a";
