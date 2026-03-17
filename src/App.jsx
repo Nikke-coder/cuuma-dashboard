@@ -3821,7 +3821,7 @@ function CommentsPanel({supabase, clientName, userName, enabled}) {
             <button onClick={()=>setOpen(false)}
               style={{background:"none",border:"none",color:SLATE,fontSize:18,cursor:"pointer",lineHeight:1,padding:"2px 6px"}}>✕</button>
           </div>
-          <div style={{flex:1,overflowY:"auto",padding:"12px 14px",display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{flex:1,overflowY:"auto",padding:"12px 14px",display:"flex",flexDirection:"column",gap:10,background:T.bgCard}}>
             {comments.length===0&&(
               <div style={{textAlign:"center",padding:"24px 0",color:SLATE,fontSize:11,fontFamily:"'DM Mono',monospace"}}>
                 No comments yet.<br/>Start the discussion.
