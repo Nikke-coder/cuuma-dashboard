@@ -3983,12 +3983,12 @@ function Dashboard() {
   const closCash = MONTHS.map((_,i) => actuals.cash[i]||0);
 
   const cfAll   = MONTHS.map((_,i)=>({month:MONTHS[i],
-    op:     h(cfOp,    ccfOp,   i),
-    inv:    h(cfInv,   ccfInv,  i),
-    fin:    h(cfFin,   ccfFin,  i),
-    net:    h(netCFArr,ccfNet,  i),
-    endCash:h(closCash,ccfClose,i),
-    isComp: i>actLast,
+    op:     i<=actLast ? (cfOp[i]||0)     : 0,
+    inv:    i<=actLast ? (cfInv[i]||0)    : 0,
+    fin:    i<=actLast ? (cfFin[i]||0)    : 0,
+    net:    i<=actLast ? (netCFArr[i]||0) : 0,
+    endCash:i<=actLast ? (closCash[i]||0) : 0,
+    isComp: false,
   }));
   const cfChart = cfAll.slice(S,E+1);
 
