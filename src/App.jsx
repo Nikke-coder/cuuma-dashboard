@@ -250,8 +250,20 @@ const Gauge = ({label,value,unit,target,targetLabel,color,desc,flip}) => {
   );
 };
 
-const TblHead = ({visMonths,monthTypes,totalLabel,stickyBg}) => {
+const TblHead = ({visMonths,monthTypes,totalLabel,stickyBg,simple}) => {
   const bg = stickyBg||"#0c1420";
+  if(simple) return (
+    <thead>
+      <tr style={{borderBottom:"1px solid #1e2d45",background:"#070c17"}}>
+        <th style={{textAlign:"left",padding:"10px 20px",color:SLATE,fontWeight:500,minWidth:190,position:"sticky",left:0,background:bg,zIndex:2}}>Line Item</th>
+        {visMonths.map((m,i)=>(
+          <th key={i} style={{padding:"8px 10px",fontWeight:600,fontSize:10,textAlign:"right",
+            color:monthTypes[i]==="ACT"?"#93c5fd":"#fcd34d",whiteSpace:"nowrap",minWidth:80}}>{m}</th>
+        ))}
+        <th style={{padding:"8px 10px",fontWeight:600,fontSize:10,textAlign:"right",color:"#94a3b8",minWidth:90,borderLeft:"1px solid #1e2d45"}}>{totalLabel||"Total"}</th>
+      </tr>
+    </thead>
+  );
   return (
     <thead>
       <tr style={{borderBottom:"1px solid #0f1e30"}}>
@@ -3211,11 +3223,19 @@ function PLTab({actuals,comp,compLabel,mode,setMode,S,E,visMonths,monthTypes,plR
   const ebitPct = totRev ? (totEBIT/totRev*100).toFixed(1) : 0;
   const netPct  = totRev ? (totNet/totRev*100).toFixed(1) : 0;
 
-  const chartData = MONTHS_A.map((m,i)=>({
+  const // ACT+trajectory: show ACT up to actLast, then comp
+  chartData = MONTHS_A.map((m,i)=>({
     month:m,
-    revenue:actuals.revenue[i],   cRevenue:comp.revenue?comp.revenue[i]:0,
-    grossProfit:actuals.grossProfit[i], ebitda:actuals.ebitda[i],
-    netProfit:actuals.netProfit[i], cNet:comp.netProfit?comp.netProfit[i]:0,
+    // ACT values (solid line stops at actLast)
+    revenue:     i<=actLast ? actuals.revenue[i]    : null,
+    grossProfit: i<=actLast ? actuals.grossProfit[i]: null,
+    ebitda:      i<=actLast ? actuals.ebitda[i]     : null,
+    netProfit:   i<=actLast ? actuals.netProfit[i]  : null,
+    // Comp values (dashed line, starts at actLast to connect)
+    cRevenue:    i>=actLast ? (comp.revenue?.[i]||0)    : null,
+    cGrossProfit:i>=actLast ? (comp.grossProfit?.[i]||0): null,
+    cEbitda:     i>=actLast ? (comp.ebitda?.[i]||0)     : null,
+    cNet:        i>=actLast ? (comp.netProfit?.[i]||0)  : null,
   }));
 
   return (
@@ -3271,8 +3291,9 @@ function PLTab({actuals,comp,compLabel,mode,setMode,S,E,visMonths,monthTypes,plR
               <YAxis tick={{fontSize:10,fill:SLATE}} axisLine={false} tickLine={false} tickFormatter={v=>"€"+(v/1e3).toFixed(0)+"K"}/>
               <Tooltip content={<Tt/>}/>
               <Line type="monotone" dataKey="revenue"  stroke={BLUE}  strokeWidth={2} dot={false} name="Revenue ACT"/>
-              <Line type="monotone" dataKey="cRevenue" stroke={AMBER} strokeWidth={1.5} dot={false} strokeDasharray="4 4" name={"Revenue "+compLabel}/>
-              <Line type="monotone" dataKey="grossProfit" stroke={CYAN} strokeWidth={1.5} dot={false} strokeDasharray="2 2" name="Gross Profit"/>
+              <Line type="monotone" dataKey="cRevenue"     stroke={AMBER} strokeWidth={1.5} dot={false} strokeDasharray="4 4" name={"Revenue "+compLabel} connectNulls={false}/>
+              <Line type="monotone" dataKey="grossProfit" stroke={CYAN}  strokeWidth={1.5} dot={false} strokeDasharray="2 2" name="Gross Profit" connectNulls={false}/>
+              <Line type="monotone" dataKey="cGrossProfit" stroke={CYAN} strokeWidth={1.5} dot={false} strokeDasharray="4 4" name={"GP "+compLabel} connectNulls={false}/>
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -3285,8 +3306,9 @@ function PLTab({actuals,comp,compLabel,mode,setMode,S,E,visMonths,monthTypes,plR
               <YAxis tick={{fontSize:10,fill:SLATE}} axisLine={false} tickLine={false} tickFormatter={v=>"€"+(v/1e3).toFixed(0)+"K"}/>
               <Tooltip content={<Tt/>}/>
               <Line type="monotone" dataKey="ebitda"    stroke={AMBER} strokeWidth={2} dot={false} name="EBITDA ACT"/>
-              <Line type="monotone" dataKey="netProfit" stroke={GREEN} strokeWidth={2} dot={false} name="Net Profit ACT"/>
-              <Line type="monotone" dataKey="cNet"      stroke={AMBER} strokeWidth={1.5} dot={false} strokeDasharray="4 4" name={"Net "+compLabel}/>
+              <Line type="monotone" dataKey="netProfit" stroke={GREEN} strokeWidth={2}   dot={false} name="Net Profit ACT" connectNulls={false}/>
+              <Line type="monotone" dataKey="cNet"      stroke={AMBER} strokeWidth={1.5} dot={false} strokeDasharray="4 4" name={"Net "+compLabel} connectNulls={false}/>
+              <Line type="monotone" dataKey="cEbitda"   stroke={AMBER} strokeWidth={1.5} dot={false} strokeDasharray="2 2" name={"EBITDA "+compLabel} connectNulls={false}/>
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -3896,9 +3918,25 @@ function Dashboard() {
   const eqDebtData=MONTHS.map((m,i)=>({month:m,equity:actuals.equity[i],debt:(actuals.ltDebt[i]||0)+(actuals.stDebt[i]||0)}));
   const gearData  =MONTHS.map((m,i)=>({month:m,gearing:actuals.equity[i]?+(((actuals.ltDebt[i]||0)+(actuals.stDebt[i]||0))/actuals.equity[i]*100).toFixed(1):0}));
   const effData   =MONTHS.map((m,i)=>({month:m,dso:actuals.revenue[i]?+(actuals.receivables[i]/(actuals.revenue[i]/30)).toFixed(0):0}));
-  const fcRevData =MONTHS.map((m,i)=>({month:m,act:actuals.revenue[i],comp:comp.revenue[i]}));
-  const fcEqData  =MONTHS.map((m,i)=>({month:m,act:actuals.equity[i], comp:comp.equity[i]}));
-  const fcCashData=MONTHS.map((m,i)=>({month:m,act:actuals.cash[i],   comp:comp.cash[i]}));
+  // Trajectory: ACT months show actual, then transitions to BUD/EST
+  // Single line: ACT values up to actLast, then comp values after
+  const fcRevData =MONTHS.map((m,i)=>({
+    month:m,
+    act:  i<=actLast ? (actuals.revenue[i]||0) : null,
+    comp: i>=actLast ? (i===actLast ? (actuals.revenue[i]||0) : (comp.revenue||[])[i]||0) : null,
+  }));
+  const fcEqData  =MONTHS.map((m,i)=>({
+    month:m,
+    act:  i<=actLast ? (actuals.equity[i]||0) : null,
+    comp: i>=actLast ? (i===actLast ? (actuals.equity[i]||0) : (comp.equity||[])[i]||0) : null,
+  }));
+  // Cash: carry forward from last ACT cash for comp months
+  const _lastActCash = actuals.cash[actLast]||0;
+  const fcCashData=MONTHS.map((m,i)=>({
+    month:m,
+    act:  i<=actLast ? (actuals.cash[i]||0) : null,
+    comp: i>=actLast ? (i===actLast ? _lastActCash : (_lastActCash + (comp.cash||[])[i] - (comp.cash||[])[actLast])||0) : null,
+  }));
     // ── CASH FLOW — indirect method, hybrid residual ──────────────────────────
   // Opening cash: use prior year Dec if available, else back-derive from month 1
   const _prevYearData = DATA_BY_YEAR[String(parseInt(year)-1)];
@@ -3944,7 +3982,14 @@ function Dashboard() {
   const netCFArr = MONTHS.map((_,i) => cfOp[i]+cfInv[i]+cfFin[i]);
   const closCash = MONTHS.map((_,i) => actuals.cash[i]||0);
 
-  const cfAll   = MONTHS.map((_,i)=>({month:MONTHS[i],op:cfOp[i],inv:cfInv[i],fin:cfFin[i],net:netCFArr[i],endCash:closCash[i]}));
+  const cfAll   = MONTHS.map((_,i)=>({month:MONTHS[i],
+    op:     h(cfOp,    ccfOp,   i),
+    inv:    h(cfInv,   ccfInv,  i),
+    fin:    h(cfFin,   ccfFin,  i),
+    net:    h(netCFArr,ccfNet,  i),
+    endCash:h(closCash,ccfClose,i),
+    isComp: i>actLast,
+  }));
   const cfChart = cfAll.slice(S,E+1);
 
   const CSV_FIELDS=[
@@ -4397,24 +4442,59 @@ function Dashboard() {
     {label:"TOTAL LIABILITIES", aa:totLiab,       ca:null,          color:RED,  bold:true},
   ];
 
+  // ── Comp (BUD/EST) cash flow calculation ──────────────────────────────────
+  const _compPrev = DATA_BY_YEAR[String(parseInt(year)-1)];
+  const _compPrevBS = (key) => _compPrev ? (_compPrev[key]||[])[11]||0 : (comp[key]?.[0]||0);
+  const _dc = (key,i) => i===0
+    ? (comp[key]?.[0]||0) - _compPrevBS(key)
+    : (comp[key]?.[i]||0) - (comp[key]?.[i-1]||0);
+  const ccfDRec = MONTHS.map((_,i) => -_dc('receivables',i));
+  const ccfDInv = MONTHS.map((_,i) => -_dc('inventory',i));
+  const ccfDPay = MONTHS.map((_,i) =>  _dc('payables',i));
+  const ccfDOCL = MONTHS.map((_,i) =>  _dc('otherCL',i));
+  const ccfWC   = MONTHS.map((_,i) => ccfDRec[i]+ccfDInv[i]+ccfDPay[i]+ccfDOCL[i]);
+  const ccfOpBefore = MONTHS.map((_,i) => (comp.ebitda?.[i]||0) + ccfWC[i]);
+  const ccfInterest = MONTHS.map((_,i) => -(comp.finExpenses?.[i]||0));
+  const ccfTaxCF    = MONTHS.map((_,i) => -(comp.tax?.[i]||0));
+  const ccfOp   = MONTHS.map((_,i) => ccfOpBefore[i]+ccfInterest[i]+ccfTaxCF[i]);
+  const ccfDLT  = MONTHS.map((_,i) =>  _dc('ltDebt',i));
+  const ccfDST  = MONTHS.map((_,i) =>  _dc('stDebt',i));
+  const ccfFin  = MONTHS.map((_,i) => ccfDLT[i]+ccfDST[i]);
+  // Comp opening cash: last ACT cash at actLast
+  const ccfOpen = MONTHS.map((_,i) => i===0 ? (actuals.cash[actLast]||0) : (comp.cash?.[i-1]||0));
+  const ccfClose= MONTHS.map((_,i) => comp.cash?.[i]||0);
+  const ccfInv  = MONTHS.map((_,i) => {
+    const dCash = (comp.cash?.[i]||0) - ccfOpen[i];
+    return dCash - ccfOp[i] - ccfFin[i];
+  });
+  const ccfNet  = MONTHS.map((_,i) => ccfOp[i]+ccfInv[i]+ccfFin[i]);
+
+  // Hybrid: ACT for months <= actLast, comp for months > actLast
+  const h = (actArr, compArr, i) => i<=actLast ? (actArr[i]||0) : (compArr[i]||0);
+  const hNoSum = (actArr, compArr, fn) => {
+    const s=S, e=E;
+    if(fn==='first') return h(actArr, compArr, s);
+    return h(actArr, compArr, e);
+  };
+
   const netCF = netCFArr;
   const cfTbl=[
-    {label:"EBITDA",                          aa:actuals.ebitda, color:AMBER,      bold:true},
-    {label:"  Δ Receivables",                 aa:cfDRec,         color:SLATE,      indent:true},
-    {label:"  Δ Inventory",                   aa:cfDInv,         color:SLATE,      indent:true},
-    {label:"  Δ Payables",                    aa:cfDPay,         color:SLATE,      indent:true},
-    {label:"  Δ Other current liabilities",   aa:cfDOCL,         color:SLATE,      indent:true},
-    {label:"OPERATIVE CF BEFORE FIN. ITEMS",   aa:cfOpBefore,     color:CYAN,       bold:true},
-    {label:"  Interest & financing",           aa:cfInterest,     color:SLATE,      indent:true},
-    {label:"  Taxes paid",                     aa:cfTaxCF,        color:SLATE,      indent:true},
-    {label:"OPERATIVE CASHFLOW",               aa:cfOp,           color:GREEN,      bold:true},
-    {label:"INVESTMENT CASHFLOW",              aa:cfInv,          color:RED,        bold:true},
-    {label:"  Δ LT debt",                     aa:cfDLT,          color:SLATE,      indent:true},
-    {label:"  Δ ST debt",                     aa:cfDST,          color:SLATE,      indent:true},
-    {label:"FINANCING CASHFLOW",               aa:cfFin,          color:"#94a3b8",  bold:true},
-    {label:"NET CASH CHANGE",                  aa:netCFArr,       color:BLUE,       bold:true},
-    {label:"Opening cash",                     aa:openCash,       color:SLATE,      noSum:true,sumFn:"first"},
-    {label:"CLOSING CASH BALANCE",             aa:closCash,       color:CYAN,       bold:true,  noSum:true,sumFn:"last"},
+    {label:"EBITDA",                          aa:MONTHS.map((_,i)=>h(actuals.ebitda,comp.ebitda,i)), color:AMBER,     bold:true},
+    {label:"  Δ Receivables",                 aa:MONTHS.map((_,i)=>h(cfDRec,ccfDRec,i)),   color:SLATE,     indent:true},
+    {label:"  Δ Inventory",                   aa:MONTHS.map((_,i)=>h(cfDInv,ccfDInv,i)),   color:SLATE,     indent:true},
+    {label:"  Δ Payables",                    aa:MONTHS.map((_,i)=>h(cfDPay,ccfDPay,i)),   color:SLATE,     indent:true},
+    {label:"  Δ Other current liabilities",   aa:MONTHS.map((_,i)=>h(cfDOCL,ccfDOCL,i)),  color:SLATE,     indent:true},
+    {label:"OPERATIVE CF BEFORE FIN. ITEMS",  aa:MONTHS.map((_,i)=>h(cfOpBefore,ccfOpBefore,i)), color:CYAN, bold:true},
+    {label:"  Interest & financing",          aa:MONTHS.map((_,i)=>h(cfInterest,ccfInterest,i)), color:SLATE, indent:true},
+    {label:"  Taxes paid",                    aa:MONTHS.map((_,i)=>h(cfTaxCF,ccfTaxCF,i)), color:SLATE,     indent:true},
+    {label:"OPERATIVE CASHFLOW",              aa:MONTHS.map((_,i)=>h(cfOp,ccfOp,i)),       color:GREEN,     bold:true},
+    {label:"INVESTMENT CASHFLOW",             aa:MONTHS.map((_,i)=>h(cfInv,ccfInv,i)),     color:RED,       bold:true},
+    {label:"  Δ LT debt",                    aa:MONTHS.map((_,i)=>h(cfDLT,ccfDLT,i)),     color:SLATE,     indent:true},
+    {label:"  Δ ST debt",                    aa:MONTHS.map((_,i)=>h(cfDST,ccfDST,i)),     color:SLATE,     indent:true},
+    {label:"FINANCING CASHFLOW",              aa:MONTHS.map((_,i)=>h(cfFin,ccfFin,i)),     color:"#94a3b8", bold:true},
+    {label:"NET CASH CHANGE",                 aa:MONTHS.map((_,i)=>h(netCFArr,ccfNet,i)),  color:BLUE,      bold:true},
+    {label:"Opening cash",                    aa:MONTHS.map((_,i)=>h(openCash,ccfOpen,i)), color:SLATE,     noSum:true,sumFn:"first"},
+    {label:"CLOSING CASH BALANCE",            aa:MONTHS.map((_,i)=>h(closCash,ccfClose,i)),color:CYAN,      bold:true,noSum:true,sumFn:"last"},
   ];
   const totOp =sum(sl(cfOp, S,E));
   const totInv=sum(sl(cfInv,S,E));
@@ -4684,7 +4764,7 @@ function Dashboard() {
               </div>
               <div style={{overflowX:"auto"}}>
                 <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,fontFamily:"'DM Mono',monospace"}}>
-                  <TblHead visMonths={visMonths} monthTypes={monthTypes} totalLabel={MONTHS[S]+"–"+MONTHS[E]}/>
+                  <TblHead visMonths={visMonths} monthTypes={monthTypes} totalLabel={MONTHS[S]+"–"+MONTHS[E]} simple={true}/>
                   <tbody>
                     {cfTbl.map((row,ri)=>{
                       const sliced=sl(row.aa,S,E);
@@ -4697,13 +4777,17 @@ function Dashboard() {
                       return (
                         <tr key={ri} className="tbl-row" style={{borderBottom:"1px solid #080f1a",borderTop:topBorder,background:rowBg}}>
                           <td style={{padding:labelPad,color:row.color,fontWeight:row.bold?700:400,fontSize:row.bold?12:11,position:"sticky",left:0,background:row.bold?"#0d1625":"#0c1420",zIndex:1,borderRight:"1px solid #0f1e30"}}>{row.label}</td>
-                          {sliced.map((v,i)=>[
-                            <td key={"a"+i} style={{padding:"7px 8px",textAlign:"right",color:row.color,fontWeight:row.bold?700:400,fontSize:11,fontFamily:"'DM Mono',monospace",whiteSpace:"nowrap"}}>{fmt(v)}</td>,
-                            <td key={"c"+i} style={{padding:"7px 4px",textAlign:"right",color:SLATE,fontSize:10}}>—</td>,
-                          ])}
+                          {sliced.map((v,i)=>{
+                            const isComp = i+S > actLast;
+                            return (
+                            <td key={"a"+i} style={{padding:"7px 8px",textAlign:"right",
+                              color:isComp?AMBER:row.color,
+                              fontWeight:row.bold?700:400,fontSize:11,
+                              fontFamily:"'DM Mono',monospace",whiteSpace:"nowrap",
+                              opacity:isComp?0.85:1}}>{fmt(v)}</td>
+                            );
+                          })}
                           <td style={{padding:"7px 10px",textAlign:"right",color:row.color,fontWeight:700,borderLeft:"1px solid #1e2d45",fontFamily:"'DM Mono',monospace",whiteSpace:"nowrap"}}>{fmt(total)}</td>
-                          <td style={{padding:"7px 8px",color:SLATE}}>—</td>
-                          <td style={{padding:"7px 8px",color:SLATE}}>—</td>
                         </tr>
                       );
                     })}
