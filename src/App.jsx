@@ -1,7 +1,6 @@
 import React from "react";
 import { useState, useRef, useEffect } from "react";
 
-
 function useWindowWidth() {
   const [w, setW] = useState(window.innerWidth);
   useEffect(() => {
@@ -85,7 +84,7 @@ const actBase = {
   stDebt:        [0,0,0,0,0,0,0,0,0,0,0,0],
   payables:      [240655,292238,224710,189038,209472,173021,144587,201805,175685,186538,223159,178733],
   otherCL:       [332333,369887,397547,402496,396505,386562,329139,344230,376871,372771,362533,395432],
-};;;
+};;
 const budBase = {
   revenue:       [264308,270225,275353,281716,287989,293218,286674,301955,315478,323014,330560,337715],
   cogs:          [-83622,-84105,-84766,-85472,-86184,-86902,-87626,-88356,-89092,-89824,-90561,-91306],
@@ -108,7 +107,8 @@ const budBase = {
   stDebt:        [0,0,0,0,0,0,0,0,0,0,0,0],
   payables:      [178733,178733,178733,178733,178733,178733,178733,178733,178733,178733,178733,178733],
   otherCL:       [395432,395432,395432,395432,395432,395432,395432,395432,395432,395432,395432,395432],
-};
+}
+
 const estBase = {
   revenue:       [282350,277137,290000,281716,287989,293218,286674,301955,315478,323014,330560,337715],
   cogs:          [-91824,-84105,-92800,-88472,-89184,-89902,-90626,-91356,-92092,-92824,-93561,-94306],
@@ -123,7 +123,7 @@ const estBase = {
   ebt:           [-28645,-21046,-4852,-26375,-20469,-9832,60537,-15470,-14076,-3906,3678,18702],
   tangibles:     [205828,202413,198998,195583,192168,188753,185338,181923,178508,175093,171678,168263],
   inventory:     [9748,9748,9748,9748,9748,9748,9748,9748,9748,9748,9748,9748],
-  receivables:   [392558,388262,388262,388262,388262,388262,388262,388262,388262,388262,388262,388262],
+  receivables:   [388262,388262,388262,388262,388262,388262,388262,388262,388262,388262,388262,388262],
   cash:          [99240,115915,113004,97179,84897,78998,115320,106038,97593,95249,97456,116088],
   otherCA:       [199800,199800,199800,199800,199800,199800,199800,199800,199800,199800,199800,199800],
   equity:        [246009,222108,217256,190881,170412,160580,221117,205647,191571,187665,191343,222396],
@@ -131,7 +131,7 @@ const estBase = {
   stDebt:        [0,0,0,0,0,0,0,0,0,0,0,0],
   payables:      [283982,283982,283982,283982,283982,283982,283982,283982,283982,283982,283982,283982],
   otherCL:       [410048,410048,410048,410048,410048,410048,410048,410048,410048,410048,410048,410048],
-};;;;
+};;;
 
 
 const DATA_BY_YEAR = {
@@ -251,19 +251,14 @@ const Gauge = ({label,value,unit,target,targetLabel,color,desc,flip}) => {
 };
 
 const TblHead = ({visMonths,monthTypes,totalLabel,stickyBg,simple}) => {
-  const bg = stickyBg||"#0c1420";
   if(simple) return (
-    <thead>
-      <tr style={{borderBottom:"1px solid #1e2d45",background:"#070c17"}}>
-        <th style={{textAlign:"left",padding:"10px 20px",color:SLATE,fontWeight:500,minWidth:190,position:"sticky",left:0,background:bg,zIndex:2}}>Line Item</th>
-        {visMonths.map((m,i)=>(
-          <th key={i} style={{padding:"8px 10px",fontWeight:600,fontSize:10,textAlign:"right",
-            color:monthTypes[i]==="ACT"?"#93c5fd":"#fcd34d",whiteSpace:"nowrap",minWidth:80}}>{m}</th>
-        ))}
-        <th style={{padding:"8px 10px",fontWeight:600,fontSize:10,textAlign:"right",color:"#94a3b8",minWidth:90,borderLeft:"1px solid #1e2d45"}}>{totalLabel||"Total"}</th>
-      </tr>
-    </thead>
+    <thead><tr style={{borderBottom:"1px solid #1e2d45",background:"#070c17"}}>
+      <th style={{textAlign:"left",padding:"10px 20px",color:SLATE,fontWeight:500,minWidth:190,position:"sticky",left:0,background:stickyBg||"#0c1420",zIndex:2}}>Line Item</th>
+      {visMonths.map((m,i)=>(<th key={i} style={{padding:"8px 10px",fontWeight:600,fontSize:10,textAlign:"right",color:monthTypes[i]==="ACT"?"#93c5fd":"#fcd34d",whiteSpace:"nowrap",minWidth:80}}>{m}</th>))}
+      <th style={{padding:"8px 10px",fontWeight:600,fontSize:10,textAlign:"right",color:"#94a3b8",minWidth:90,borderLeft:"1px solid #1e2d45"}}>{totalLabel||"Total"}</th>
+    </tr></thead>
   );
+  const bg = stickyBg||"#0c1420";
   return (
     <thead>
       <tr style={{borderBottom:"1px solid #0f1e30"}}>
@@ -948,10 +943,7 @@ function MembersPanel({supabase, currentUserEmail, credits, setCredits, customTa
     if(!supabase) return;
     supabase.from("dashboard_members").select("*")
       .eq("client", CLIENT_NAME).order("created_at")
-      .then(({data, error})=>{
-        if(error) console.error("dashboard_members load error:", error.message, error.code);
-        setMembers(data||[]); setLoading(false);
-      });
+      .then(({data})=>{ setMembers(data||[]); setLoading(false); });
   },[]);
 
   const handleInvite = async () => {
@@ -959,78 +951,61 @@ function MembersPanel({supabase, currentUserEmail, credits, setCredits, customTa
     setInviteErr("");
     setInviting(true);
 
-    try {
-      // Check not already member
-      if(members.find(m=>m.email===inviteEmail.trim())) {
-        setInviteErr("This email is already a member."); setInviting(false); return;
-      }
-
-      // Deduct credits (skip if unlimited or not loaded)
-      if(credits !== null && credits !== Infinity) {
-        if((credits??0) < MEMBER_FEE_CR) {
-          setInviteErr(`Insufficient credits. Need ${MEMBER_FEE_CR} cr for first month.`);
-          setInviting(false); return;
-        }
-        const newBal = (credits??0) - MEMBER_FEE_CR;
-        try {
-          await supabase.from("ai_credits").upsert(
-            {user_email:currentUserEmail, client:CLIENT_NAME, balance:newBal, updated_at:new Date().toISOString()},
-            {onConflict:"user_email"}
-          );
-          await supabase.from("ai_transactions").insert({
-            client:CLIENT_NAME, user_email:currentUserEmail,
-            credits:-MEMBER_FEE_CR, type:"usage",
-          });
-          setCredits(newBal);
-        } catch(credErr) {
-          console.warn("Credit deduction failed (non-fatal):", credErr);
-        }
-      }
-
-      // Create member record
-      const {data, error} = await supabase.from("dashboard_members").insert({
-        client:     CLIENT_NAME,
-        email:      inviteEmail.trim(),
-        role:       "member",
-        invited_by: currentUserEmail,
-        tab_access: DEFAULT_TABS,
-        shared_tabs:[],
-        active:     false,
-        fee_paid_at:new Date().toISOString(),
-      }).select().single();
-
-      if(error) {
-        console.error("dashboard_members insert error:", error);
-        setInviteErr("Error: "+error.message+(error.code?" ("+error.code+")":""));
-        setInviting(false); return;
-      }
-
-      // Send invite via backend (needs service role key)
-      try {
-        const invResp = await fetch("/api/invite-member", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email:       inviteEmail.trim(),
-            client:      CLIENT_NAME,
-            invited_by:  currentUserEmail,
-          }),
-        });
-        const invData = await invResp.json();
-        if (!invResp.ok) console.warn("Invite API warning:", invData.error);
-      } catch(invErr) {
-        console.warn("Invite send failed (non-fatal):", invErr.message);
-      }
-
-      setMembers(prev=>[...prev, data]);
-      setInviteEmail("");
-      setInviting(false);
-
-    } catch(e) {
-      console.error("handleInvite error:", e);
-      setInviteErr("Unexpected error: "+e.message);
-      setInviting(false);
+    // Check credits
+    if(credits !== null && credits !== Infinity && (credits??0) < MEMBER_FEE_CR) {
+      setInviteErr(`Insufficient credits. Need ${MEMBER_FEE_CR} cr for first month.`);
+      setInviting(false); return;
     }
+
+    // Check not already member
+    if(members.find(m=>m.email===inviteEmail.trim())) {
+      setInviteErr("This email is already a member."); setInviting(false); return;
+    }
+
+    // Deduct credits
+    if(credits !== Infinity) {
+      const newBal = (credits??0) - MEMBER_FEE_CR;
+      await supabase.from("ai_credits").upsert(
+        {user_email:currentUserEmail, client:CLIENT_NAME, balance:newBal, updated_at:new Date().toISOString()},
+        {onConflict:"user_email"}
+      );
+      await supabase.from("ai_transactions").insert({
+        client:CLIENT_NAME, user_email:currentUserEmail,
+        credits:-MEMBER_FEE_CR, type:"usage",
+      });
+      setCredits(newBal);
+    }
+
+    // Create member record
+    const {data, error} = await supabase.from("dashboard_members").insert({
+      client:     CLIENT_NAME,
+      email:      inviteEmail.trim(),
+      role:       "member",
+      invited_by: currentUserEmail,
+      tab_access: DEFAULT_TABS,
+      shared_tabs:[],
+      active:     false,
+      fee_paid_at:new Date().toISOString(),
+    }).select().single();
+
+    if(error) {
+      console.error("dashboard_members insert error:", error);
+      setInviteErr("Error: "+error.message+(error.code?" ("+error.code+")":""));
+      setInviting(false); return;
+    }
+
+    // Send invite via backend API
+    try {
+      const invResp = await fetch("/api/invite-member", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({email:inviteEmail.trim(),client:CLIENT_NAME,invited_by:currentUserEmail}),
+      });
+      if(!invResp.ok){const d=await invResp.json().catch(()=>({}));console.warn("Invite warning:",d.error);}
+    } catch(invErr){ console.warn("Invite send failed:",invErr.message); }
+
+    setMembers(prev=>[...prev, data]);
+    setInviteEmail("");
+    setInviting(false);
   };
 
   const handleRemove = async (member) => {
@@ -1170,7 +1145,6 @@ function MembersPanel({supabase, currentUserEmail, credits, setCredits, customTa
           Cost: <span style={{color:AMBER,fontWeight:600}}>{MEMBER_FEE_CR} cr/month</span> charged from your credit balance.
           Member gets their own credits for AI.
         </div>
-        {inviteErr&&<div style={{padding:"8px 10px",background:"rgba(244,63,94,0.08)",border:"1px solid rgba(244,63,94,0.25)",borderRadius:7,fontSize:11,color:"#f87171",fontFamily:"'DM Mono',monospace",marginBottom:8}}>{inviteErr}</div>}
         <div style={{display:"flex",gap:8}}>
           <input value={inviteEmail} onChange={e=>{setInviteEmail(e.target.value);setInviteErr("");}}
             placeholder="member@company.com"
@@ -2928,7 +2902,6 @@ function ForecastTab({actuals,comp,compLabel,mode,setMode,S,E,fcRevData,fcEqData
     const newCogs  = scnItem==="cogs"        ? (actuals.cogs||[]).map(v=>v*multiplier)        : actuals.cogs;
     const newOpex  = scnItem==="opex"        ? (actuals.opex||[]).map(v=>v*multiplier)        : actuals.opex;
     const newFin   = scnItem==="finExpenses" ? (actuals.finExpenses||[]).map(v=>v*multiplier) : actuals.finExpenses;
-    // cogs, opex, depAmort, finExpenses, tax are stored as negative values
     const newGP    = (newRev||[]).map((v,i)=>v+(newCogs[i]||0));
     const newEBIT  = newGP.map((v,i)=>v+(newOpex[i]||0));
     const newEBIT2 = newEBIT.map((v,i)=>v+((actuals.depAmort||[])[i]||0));
@@ -2959,13 +2932,13 @@ function ForecastTab({actuals,comp,compLabel,mode,setMode,S,E,fcRevData,fcEqData
 
   const heatEbitda = STEPS.map(rp=>STEPS.map(op=>{
     const r=baseRev*(1+rp/100), o=baseOpex*(1+op/100);
-    return r+baseCogs+o; // cogs & opex are negative, so add them
+    return r+baseCogs+o;
   }));
 
   const heatEquity = STEPS.map(rp=>STEPS.map(op=>{
     const revChg = baseRev*(rp/100);
     const opxChg = baseOpex*(op/100);
-    const netImpact = revChg - opxChg; // pre-tax P&L impact on equity
+    const netImpact = revChg - opxChg;
     return baseEquity + netImpact;
   }));
 
@@ -3223,15 +3196,12 @@ function PLTab({actuals,comp,compLabel,mode,setMode,S,E,visMonths,monthTypes,plR
   const ebitPct = totRev ? (totEBIT/totRev*100).toFixed(1) : 0;
   const netPct  = totRev ? (totNet/totRev*100).toFixed(1) : 0;
 
-  const // ACT+trajectory: show ACT up to actLast, then comp
-  chartData = MONTHS_A.map((m,i)=>({
+  const chartData = MONTHS_A.map((m,i)=>({
     month:m,
-    // ACT values (solid line stops at actLast)
     revenue:     i<=actLast ? actuals.revenue[i]    : null,
     grossProfit: i<=actLast ? actuals.grossProfit[i]: null,
     ebitda:      i<=actLast ? actuals.ebitda[i]     : null,
     netProfit:   i<=actLast ? actuals.netProfit[i]  : null,
-    // Comp values (dashed line, starts at actLast to connect)
     cRevenue:    i>=actLast ? (comp.revenue?.[i]||0)    : null,
     cGrossProfit:i>=actLast ? (comp.grossProfit?.[i]||0): null,
     cEbitda:     i>=actLast ? (comp.ebitda?.[i]||0)     : null,
@@ -3291,9 +3261,9 @@ function PLTab({actuals,comp,compLabel,mode,setMode,S,E,visMonths,monthTypes,plR
               <YAxis tick={{fontSize:10,fill:SLATE}} axisLine={false} tickLine={false} tickFormatter={v=>"€"+(v/1e3).toFixed(0)+"K"}/>
               <Tooltip content={<Tt/>}/>
               <Line type="monotone" dataKey="revenue"  stroke={BLUE}  strokeWidth={2} dot={false} name="Revenue ACT"/>
-              <Line type="monotone" dataKey="cRevenue"     stroke={AMBER} strokeWidth={1.5} dot={false} strokeDasharray="4 4" name={"Revenue "+compLabel} connectNulls={false}/>
-              <Line type="monotone" dataKey="grossProfit" stroke={CYAN}  strokeWidth={1.5} dot={false} strokeDasharray="2 2" name="Gross Profit" connectNulls={false}/>
-              <Line type="monotone" dataKey="cGrossProfit" stroke={CYAN} strokeWidth={1.5} dot={false} strokeDasharray="4 4" name={"GP "+compLabel} connectNulls={false}/>
+              <Line type="monotone" dataKey="cRevenue"      stroke={AMBER} strokeWidth={1.5} dot={false} strokeDasharray="4 4" name={"Revenue "+compLabel} connectNulls={false}/>
+              <Line type="monotone" dataKey="grossProfit"  stroke={CYAN}  strokeWidth={1.5} dot={false} name="Gross Profit" connectNulls={false}/>
+              <Line type="monotone" dataKey="cGrossProfit" stroke={CYAN}  strokeWidth={1.5} dot={false} strokeDasharray="4 4" name={"GP "+compLabel} connectNulls={false}/>
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -3918,24 +3888,21 @@ function Dashboard() {
   const eqDebtData=MONTHS.map((m,i)=>({month:m,equity:actuals.equity[i],debt:(actuals.ltDebt[i]||0)+(actuals.stDebt[i]||0)}));
   const gearData  =MONTHS.map((m,i)=>({month:m,gearing:actuals.equity[i]?+(((actuals.ltDebt[i]||0)+(actuals.stDebt[i]||0))/actuals.equity[i]*100).toFixed(1):0}));
   const effData   =MONTHS.map((m,i)=>({month:m,dso:actuals.revenue[i]?+(actuals.receivables[i]/(actuals.revenue[i]/30)).toFixed(0):0}));
-  // Trajectory: ACT months show actual, then transitions to BUD/EST
-  // Single line: ACT values up to actLast, then comp values after
   const fcRevData =MONTHS.map((m,i)=>({
     month:m,
     act:  i<=actLast ? (actuals.revenue[i]||0) : null,
-    comp: i>=actLast ? (i===actLast ? (actuals.revenue[i]||0) : (comp.revenue||[])[i]||0) : null,
+    comp: i>=actLast ? (i===actLast?(actuals.revenue[i]||0):(comp.revenue||[])[i]||0) : null,
   }));
   const fcEqData  =MONTHS.map((m,i)=>({
     month:m,
     act:  i<=actLast ? (actuals.equity[i]||0) : null,
-    comp: i>=actLast ? (i===actLast ? (actuals.equity[i]||0) : (comp.equity||[])[i]||0) : null,
+    comp: i>=actLast ? (i===actLast?(actuals.equity[i]||0):(comp.equity||[])[i]||0) : null,
   }));
-  // Cash: carry forward from last ACT cash for comp months
-  const _lastActCash = actuals.cash[actLast]||0;
+  const _lastActCash=actuals.cash[actLast]||0;
   const fcCashData=MONTHS.map((m,i)=>({
     month:m,
     act:  i<=actLast ? (actuals.cash[i]||0) : null,
-    comp: i>=actLast ? (i===actLast ? _lastActCash : (_lastActCash + (comp.cash||[])[i] - (comp.cash||[])[actLast])||0) : null,
+    comp: i>=actLast ? (i===actLast?_lastActCash:(_lastActCash+(comp.cash||[])[i]-((comp.cash||[])[actLast]||0))) : null,
   }));
     // ── CASH FLOW — indirect method, hybrid residual ──────────────────────────
   // Opening cash: use prior year Dec if available, else back-derive from month 1
@@ -3982,14 +3949,7 @@ function Dashboard() {
   const netCFArr = MONTHS.map((_,i) => cfOp[i]+cfInv[i]+cfFin[i]);
   const closCash = MONTHS.map((_,i) => actuals.cash[i]||0);
 
-  const cfAll   = MONTHS.map((_,i)=>({month:MONTHS[i],
-    op:     i<=actLast ? (cfOp[i]||0)     : 0,
-    inv:    i<=actLast ? (cfInv[i]||0)    : 0,
-    fin:    i<=actLast ? (cfFin[i]||0)    : 0,
-    net:    i<=actLast ? (netCFArr[i]||0) : 0,
-    endCash:i<=actLast ? (closCash[i]||0) : 0,
-    isComp: false,
-  }));
+  const cfAll   = MONTHS.map((_,i)=>({month:MONTHS[i],op:cfOp[i]||0,inv:cfInv[i]||0,fin:cfFin[i]||0,net:netCFArr[i]||0,endCash:closCash[i]||0}));
   const cfChart = cfAll.slice(S,E+1);
 
   const CSV_FIELDS=[
@@ -4442,59 +4402,46 @@ function Dashboard() {
     {label:"TOTAL LIABILITIES", aa:totLiab,       ca:null,          color:RED,  bold:true},
   ];
 
-  // ── Comp (BUD/EST) cash flow calculation ──────────────────────────────────
-  const _compPrev = DATA_BY_YEAR[String(parseInt(year)-1)];
-  const _compPrevBS = (key) => _compPrev ? (_compPrev[key]||[])[11]||0 : (comp[key]?.[0]||0);
-  const _dc = (key,i) => i===0
-    ? (comp[key]?.[0]||0) - _compPrevBS(key)
-    : (comp[key]?.[i]||0) - (comp[key]?.[i-1]||0);
-  const ccfDRec = MONTHS.map((_,i) => -_dc('receivables',i));
-  const ccfDInv = MONTHS.map((_,i) => -_dc('inventory',i));
-  const ccfDPay = MONTHS.map((_,i) =>  _dc('payables',i));
-  const ccfDOCL = MONTHS.map((_,i) =>  _dc('otherCL',i));
-  const ccfWC   = MONTHS.map((_,i) => ccfDRec[i]+ccfDInv[i]+ccfDPay[i]+ccfDOCL[i]);
-  const ccfOpBefore = MONTHS.map((_,i) => (comp.ebitda?.[i]||0) + ccfWC[i]);
-  const ccfInterest = MONTHS.map((_,i) => -(comp.finExpenses?.[i]||0));
-  const ccfTaxCF    = MONTHS.map((_,i) => -(comp.tax?.[i]||0));
-  const ccfOp   = MONTHS.map((_,i) => ccfOpBefore[i]+ccfInterest[i]+ccfTaxCF[i]);
-  const ccfDLT  = MONTHS.map((_,i) =>  _dc('ltDebt',i));
-  const ccfDST  = MONTHS.map((_,i) =>  _dc('stDebt',i));
-  const ccfFin  = MONTHS.map((_,i) => ccfDLT[i]+ccfDST[i]);
-  // Comp opening cash: last ACT cash at actLast
-  const ccfOpen = MONTHS.map((_,i) => i===0 ? (actuals.cash[actLast]||0) : (comp.cash?.[i-1]||0));
-  const ccfClose= MONTHS.map((_,i) => comp.cash?.[i]||0);
-  const ccfInv  = MONTHS.map((_,i) => {
-    const dCash = (comp.cash?.[i]||0) - ccfOpen[i];
-    return dCash - ccfOp[i] - ccfFin[i];
-  });
-  const ccfNet  = MONTHS.map((_,i) => ccfOp[i]+ccfInv[i]+ccfFin[i]);
-
-  // Hybrid: ACT for months <= actLast, comp for months > actLast
-  const h = (actArr, compArr, i) => i<=actLast ? (actArr[i]||0) : (compArr[i]||0);
-  const hNoSum = (actArr, compArr, fn) => {
-    const s=S, e=E;
-    if(fn==='first') return h(actArr, compArr, s);
-    return h(actArr, compArr, e);
-  };
+  // Comp (BUD/EST) cash flow
+  const _compPrev=DATA_BY_YEAR[String(parseInt(year)-1)];
+  const _compPrevBS=(key)=>_compPrev?(_compPrev[key]||[])[11]||0:(comp[key]?.[0]||0);
+  const _dc=(key,i)=>i===0?(comp[key]?.[0]||0)-_compPrevBS(key):(comp[key]?.[i]||0)-(comp[key]?.[i-1]||0);
+  const ccfDRec=MONTHS.map((_,i)=>-_dc('receivables',i));
+  const ccfDInv=MONTHS.map((_,i)=>-_dc('inventory',i));
+  const ccfDPay=MONTHS.map((_,i)=> _dc('payables',i));
+  const ccfDOCL=MONTHS.map((_,i)=> _dc('otherCL',i));
+  const ccfWC  =MONTHS.map((_,i)=>ccfDRec[i]+ccfDInv[i]+ccfDPay[i]+ccfDOCL[i]);
+  const ccfOpBefore=MONTHS.map((_,i)=>(comp.ebitda?.[i]||0)+ccfWC[i]);
+  const ccfInterest=MONTHS.map((_,i)=>-(comp.finExpenses?.[i]||0));
+  const ccfTaxCF   =MONTHS.map((_,i)=>-(comp.tax?.[i]||0));
+  const ccfOp  =MONTHS.map((_,i)=>ccfOpBefore[i]+ccfInterest[i]+ccfTaxCF[i]);
+  const ccfDLT =MONTHS.map((_,i)=> _dc('ltDebt',i));
+  const ccfDST =MONTHS.map((_,i)=> _dc('stDebt',i));
+  const ccfFin =MONTHS.map((_,i)=>ccfDLT[i]+ccfDST[i]);
+  const ccfOpen=MONTHS.map((_,i)=>i===0?(actuals.cash[actLast]||0):(comp.cash?.[i-1]||0));
+  const ccfClose=MONTHS.map((_,i)=>comp.cash?.[i]||0);
+  const ccfInv =MONTHS.map((_,i)=>{const dCash=(comp.cash?.[i]||0)-ccfOpen[i];return dCash-ccfOp[i]-ccfFin[i];});
+  const ccfNet =MONTHS.map((_,i)=>ccfOp[i]+ccfInv[i]+ccfFin[i]);
+  const h=(aA,cA,i)=>i<=actLast?(aA[i]||0):(cA[i]||0);
 
   const netCF = netCFArr;
   const cfTbl=[
-    {label:"EBITDA",                          aa:MONTHS.map((_,i)=>h(actuals.ebitda,comp.ebitda,i)), color:AMBER,     bold:true},
-    {label:"  Δ Receivables",                 aa:MONTHS.map((_,i)=>h(cfDRec,ccfDRec,i)),   color:SLATE,     indent:true},
-    {label:"  Δ Inventory",                   aa:MONTHS.map((_,i)=>h(cfDInv,ccfDInv,i)),   color:SLATE,     indent:true},
-    {label:"  Δ Payables",                    aa:MONTHS.map((_,i)=>h(cfDPay,ccfDPay,i)),   color:SLATE,     indent:true},
-    {label:"  Δ Other current liabilities",   aa:MONTHS.map((_,i)=>h(cfDOCL,ccfDOCL,i)),  color:SLATE,     indent:true},
-    {label:"OPERATIVE CF BEFORE FIN. ITEMS",  aa:MONTHS.map((_,i)=>h(cfOpBefore,ccfOpBefore,i)), color:CYAN, bold:true},
-    {label:"  Interest & financing",          aa:MONTHS.map((_,i)=>h(cfInterest,ccfInterest,i)), color:SLATE, indent:true},
-    {label:"  Taxes paid",                    aa:MONTHS.map((_,i)=>h(cfTaxCF,ccfTaxCF,i)), color:SLATE,     indent:true},
-    {label:"OPERATIVE CASHFLOW",              aa:MONTHS.map((_,i)=>h(cfOp,ccfOp,i)),       color:GREEN,     bold:true},
-    {label:"INVESTMENT CASHFLOW",             aa:MONTHS.map((_,i)=>h(cfInv,ccfInv,i)),     color:RED,       bold:true},
-    {label:"  Δ LT debt",                    aa:MONTHS.map((_,i)=>h(cfDLT,ccfDLT,i)),     color:SLATE,     indent:true},
-    {label:"  Δ ST debt",                    aa:MONTHS.map((_,i)=>h(cfDST,ccfDST,i)),     color:SLATE,     indent:true},
-    {label:"FINANCING CASHFLOW",              aa:MONTHS.map((_,i)=>h(cfFin,ccfFin,i)),     color:"#94a3b8", bold:true},
-    {label:"NET CASH CHANGE",                 aa:MONTHS.map((_,i)=>h(netCFArr,ccfNet,i)),  color:BLUE,      bold:true},
-    {label:"Opening cash",                    aa:MONTHS.map((_,i)=>h(openCash,ccfOpen,i)), color:SLATE,     noSum:true,sumFn:"first"},
-    {label:"CLOSING CASH BALANCE",            aa:MONTHS.map((_,i)=>h(closCash,ccfClose,i)),color:CYAN,      bold:true,noSum:true,sumFn:"last"},
+    {label:"EBITDA",                         aa:MONTHS.map((_,i)=>h(actuals.ebitda,comp.ebitda||[],i)),  color:AMBER,     bold:true},
+    {label:"  Δ Receivables",                aa:MONTHS.map((_,i)=>h(cfDRec,ccfDRec,i)),    color:SLATE,     indent:true},
+    {label:"  Δ Inventory",                  aa:MONTHS.map((_,i)=>h(cfDInv,ccfDInv,i)),    color:SLATE,     indent:true},
+    {label:"  Δ Payables",                   aa:MONTHS.map((_,i)=>h(cfDPay,ccfDPay,i)),    color:SLATE,     indent:true},
+    {label:"  Δ Other current liabilities",  aa:MONTHS.map((_,i)=>h(cfDOCL,ccfDOCL,i)),   color:SLATE,     indent:true},
+    {label:"OPERATIVE CF BEFORE FIN. ITEMS", aa:MONTHS.map((_,i)=>h(cfOpBefore,ccfOpBefore,i)), color:CYAN, bold:true},
+    {label:"  Interest & financing",         aa:MONTHS.map((_,i)=>h(cfInterest,ccfInterest,i)), color:SLATE, indent:true},
+    {label:"  Taxes paid",                   aa:MONTHS.map((_,i)=>h(cfTaxCF,ccfTaxCF,i)),  color:SLATE,     indent:true},
+    {label:"OPERATIVE CASHFLOW",             aa:MONTHS.map((_,i)=>h(cfOp,ccfOp,i)),         color:GREEN,     bold:true},
+    {label:"INVESTMENT CASHFLOW",            aa:MONTHS.map((_,i)=>h(cfInv,ccfInv,i)),        color:RED,       bold:true},
+    {label:"  Δ LT debt",                   aa:MONTHS.map((_,i)=>h(cfDLT,ccfDLT,i)),        color:SLATE,     indent:true},
+    {label:"  Δ ST debt",                   aa:MONTHS.map((_,i)=>h(cfDST,ccfDST,i)),        color:SLATE,     indent:true},
+    {label:"FINANCING CASHFLOW",             aa:MONTHS.map((_,i)=>h(cfFin,ccfFin,i)),        color:"#94a3b8", bold:true},
+    {label:"NET CASH CHANGE",                aa:MONTHS.map((_,i)=>h(netCFArr,ccfNet,i)),     color:BLUE,      bold:true},
+    {label:"Opening cash",                   aa:MONTHS.map((_,i)=>h(openCash,ccfOpen,i)),    color:SLATE,     noSum:true,sumFn:"first"},
+    {label:"CLOSING CASH BALANCE",           aa:MONTHS.map((_,i)=>h(closCash,ccfClose,i)),   color:CYAN,      bold:true,noSum:true,sumFn:"last"},
   ];
   const totOp =sum(sl(cfOp, S,E));
   const totInv=sum(sl(cfInv,S,E));
@@ -4778,14 +4725,10 @@ function Dashboard() {
                         <tr key={ri} className="tbl-row" style={{borderBottom:"1px solid #080f1a",borderTop:topBorder,background:rowBg}}>
                           <td style={{padding:labelPad,color:row.color,fontWeight:row.bold?700:400,fontSize:row.bold?12:11,position:"sticky",left:0,background:row.bold?"#0d1625":"#0c1420",zIndex:1,borderRight:"1px solid #0f1e30"}}>{row.label}</td>
                           {sliced.map((v,i)=>{
-                            const isComp = i+S > actLast;
-                            return (
-                            <td key={"a"+i} style={{padding:"7px 8px",textAlign:"right",
-                              color:isComp?AMBER:row.color,
-                              fontWeight:row.bold?700:400,fontSize:11,
-                              fontFamily:"'DM Mono',monospace",whiteSpace:"nowrap",
-                              opacity:isComp?0.85:1}}>{fmt(v)}</td>
-                            );
+                            const isComp=i+S>actLast;
+                            return <td key={"a"+i} style={{padding:"7px 8px",textAlign:"right",
+                              color:isComp?AMBER:row.color,fontWeight:row.bold?700:400,fontSize:11,
+                              fontFamily:"'DM Mono',monospace",whiteSpace:"nowrap",opacity:isComp?0.85:1}}>{fmt(v)}</td>;
                           })}
                           <td style={{padding:"7px 10px",textAlign:"right",color:row.color,fontWeight:700,borderLeft:"1px solid #1e2d45",fontFamily:"'DM Mono',monospace",whiteSpace:"nowrap"}}>{fmt(total)}</td>
                         </tr>
@@ -4865,8 +4808,6 @@ function Dashboard() {
                 </div>
               )}
             </div>
-
-          </div>
 
         )}
 
