@@ -3863,7 +3863,7 @@ function CommentsPanel({supabase, clientName, userName, enabled}) {
               onBlur={e=>e.target.style.borderColor=T.border}/>
             <button onClick={post} disabled={!input.trim()||loading}
               style={{width:36,height:36,borderRadius:12,
-                background:input.trim()&&!loading?"#16a34a":"#120f26",
+                background:input.trim()&&!loading?"#16a34a":T.bgCard,
                 border:"1px solid "+(input.trim()&&!loading?"#16a34a":T.border),
                 cursor:input.trim()&&!loading?"pointer":"not-allowed",
                 color:input.trim()&&!loading?"#fff":T.textMuted,fontSize:16,transition:"all 0.15s",flexShrink:0}}>
