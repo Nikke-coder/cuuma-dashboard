@@ -918,6 +918,172 @@ Financial data for this company only (${financialContext.period}, ${financialCon
   );
 }
 
+
+// ── FilesPanel ────────────────────────────────────────────────────────────────
+// SQL to run in Supabase:
+// CREATE TABLE IF NOT EXISTS client_files (
+//   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+//   client text NOT NULL,
+//   filename text NOT NULL,
+//   size_bytes int NOT NULL,
+//   content_base64 text,
+//   uploaded_by text,
+//   uploaded_at timestamptz DEFAULT now(),
+//   note text
+// );
+// ALTER TABLE client_files ENABLE ROW LEVEL SECURITY;
+// CREATE POLICY "allow_all" ON client_files FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+const MAX_FILES = 5;
+const MAX_SIZE_MB = 2;
+
+function FilesPanel({supabase, currentUserEmail, onClose}) {
+  const [files,     setFiles]     = React.useState([]);
+  const [loading,   setLoading]   = React.useState(true);
+  const [uploading, setUploading] = React.useState(false);
+  const [note,      setNote]      = React.useState("");
+  const [msg,       setMsg]       = React.useState(null);
+  const fileRef = React.useRef();
+
+  React.useEffect(()=>{
+    if(!supabase) return;
+    supabase.from("client_files").select("id,filename,size_bytes,uploaded_by,uploaded_at,note")
+      .eq("client", CLIENT_NAME).order("uploaded_at", {ascending:false})
+      .then(({data,error})=>{
+        if(error) console.error("client_files load:", error.message);
+        setFiles(data||[]);
+        setLoading(false);
+      });
+  },[]);
+
+  const showMsg = (text, err=false) => { setMsg({text,err}); setTimeout(()=>setMsg(null), 4000); };
+
+  const handleUpload = async (file) => {
+    if(!file) return;
+    if(files.length >= MAX_FILES) { showMsg(`Max ${MAX_FILES} files allowed. Delete one first.`, true); return; }
+    const mb = file.size / (1024*1024);
+    if(mb > MAX_SIZE_MB) { showMsg(`File too large (${mb.toFixed(1)}MB). Max ${MAX_SIZE_MB}MB.`, true); return; }
+
+    setUploading(true);
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const base64 = e.target.result.split(",")[1];
+        const {data, error} = await supabase.from("client_files").insert({
+          client: CLIENT_NAME,
+          filename: file.name,
+          size_bytes: file.size,
+          content_base64: base64,
+          uploaded_by: currentUserEmail,
+          note: note.trim() || null,
+        }).select("id,filename,size_bytes,uploaded_by,uploaded_at,note").single();
+        if(error) { showMsg("Upload error: "+error.message, true); }
+        else { setFiles(prev=>[data,...prev]); setNote(""); showMsg("✓ "+file.name+" uploaded"); }
+      } catch(e) { showMsg("Error: "+e.message, true); }
+      setUploading(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDelete = async (file) => {
+    if(!window.confirm(`Delete "${file.filename}"?`)) return;
+    const {error} = await supabase.from("client_files").delete().eq("id", file.id);
+    if(error) { showMsg("Delete error: "+error.message, true); return; }
+    setFiles(prev=>prev.filter(f=>f.id!==file.id));
+    showMsg("✓ Deleted");
+  };
+
+  const handleDownload = async (file) => {
+    const {data} = await supabase.from("client_files").select("content_base64,filename")
+      .eq("id", file.id).single();
+    if(!data?.content_base64) return;
+    const a = document.createElement("a");
+    a.href = "data:application/octet-stream;base64,"+data.content_base64;
+    a.download = data.filename;
+    a.click();
+  };
+
+  const fmtSize = (b) => b>1048576 ? (b/1048576).toFixed(1)+"MB" : (b/1024).toFixed(0)+"KB";
+  const fmtDate = (d) => new Date(d).toLocaleDateString("fi-FI",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"});
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:14}}>
+      {/* Header */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div>
+          <div style={{fontSize:13,fontWeight:600,color:"#e2e8f0"}}>Client Files</div>
+          <div style={{fontSize:10,color:SLATE,fontFamily:"'DM Mono',monospace",marginTop:2}}>
+            {files.length}/{MAX_FILES} files · max {MAX_SIZE_MB}MB each
+          </div>
+        </div>
+      </div>
+
+      {/* Upload area */}
+      {files.length < MAX_FILES && (
+        <div>
+          <input value={note} onChange={e=>setNote(e.target.value)}
+            placeholder="Note (optional)..."
+            style={{width:"100%",background:"#070c17",border:"1px solid #1e2d45",borderRadius:7,
+              padding:"6px 10px",color:"#e2e8f0",fontSize:11,outline:"none",
+              fontFamily:"'DM Sans',sans-serif",marginBottom:8,boxSizing:"border-box"}}/>
+          <div onClick={()=>fileRef.current.click()}
+            style={{border:"1px dashed #1e2d45",borderRadius:8,padding:"12px 16px",
+              cursor:"pointer",textAlign:"center",background:"transparent",transition:"all 0.15s"}}
+            onMouseEnter={e=>e.currentTarget.style.borderColor="#3b82f6"}
+            onMouseLeave={e=>e.currentTarget.style.borderColor="#1e2d45"}>
+            <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls,.pdf,.txt"
+              style={{display:"none"}} onChange={e=>handleUpload(e.target.files[0])}/>
+            <span style={{fontSize:11,color:"#475569"}}>
+              {uploading?"Uploading…":"📂 Click to upload · .csv .xlsx .pdf .txt"}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Error/success */}
+      {msg&&<div style={{padding:"8px 10px",borderRadius:7,fontSize:11,
+        fontFamily:"'DM Mono',monospace",
+        background:msg.err?"rgba(244,63,94,0.08)":"rgba(74,222,128,0.08)",
+        border:"1px solid "+(msg.err?"rgba(244,63,94,0.25)":"rgba(74,222,128,0.2)"),
+        color:msg.err?"#f87171":"#4ade80"}}>{msg.text}</div>}
+
+      {/* File list */}
+      {loading ? (
+        <div style={{fontSize:11,color:SLATE}}>Loading…</div>
+      ) : files.length===0 ? (
+        <div style={{padding:"16px",textAlign:"center",border:"1px dashed #1e2d45",
+          borderRadius:8,fontSize:11,color:SLATE}}>No files yet</div>
+      ) : (
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {files.map(f=>(
+            <div key={f.id} style={{background:"#070c17",border:"1px solid #1e2d45",
+              borderRadius:8,padding:"10px 12px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <span style={{fontSize:16,flexShrink:0}}>📄</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:11,color:"#e2e8f0",overflow:"hidden",
+                    textOverflow:"ellipsis",whiteSpace:"nowrap",fontWeight:500}}>{f.filename}</div>
+                  <div style={{fontSize:9,color:SLATE,fontFamily:"'DM Mono',monospace",marginTop:2}}>
+                    {fmtSize(f.size_bytes)} · {f.uploaded_by?.split("@")[0]} · {fmtDate(f.uploaded_at)}
+                  </div>
+                  {f.note&&<div style={{fontSize:10,color:"#64748b",marginTop:3,fontStyle:"italic"}}>{f.note}</div>}
+                </div>
+                <button onClick={()=>handleDownload(f)}
+                  style={{fontSize:10,padding:"3px 8px",background:"rgba(96,165,250,0.1)",
+                    border:"1px solid rgba(96,165,250,0.25)",borderRadius:5,color:"#60a5fa",
+                    cursor:"pointer",fontFamily:"'DM Mono',monospace",flexShrink:0}}>↓</button>
+                <button onClick={()=>handleDelete(f)}
+                  style={{fontSize:12,background:"none",border:"none",color:"#475569",
+                    cursor:"pointer",padding:"2px 4px",flexShrink:0}}>✕</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── MembersPanel ──────────────────────────────────────────────────────────────
 const MEMBER_FEE_CR = 1000; // 1000 cr = €50/month
 const DEFAULT_TABS  = ["group","kpis","forecast","pl","balance","cashflow","deadlines"];
@@ -2101,6 +2267,15 @@ function SettingsMenu({actData,actName,actLast,setActData,setActName,setActLast,
               <MembersPanel supabase={supabase} currentUserEmail={userEmailProp} credits={credits} setCredits={setCredits} customTabs={customTabs} onClose={()=>setView("main")}/>
             </div>
           )}
+          {view==="files"&&(
+            <div style={{padding:16,display:"flex",flexDirection:"column",gap:12}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                <button onClick={()=>setView("main")} style={{background:"none",border:"none",color:"#64748b",cursor:"pointer",fontSize:16,padding:0}}>←</button>
+                <div style={{fontSize:13,fontWeight:600,color:"#e2e8f0"}}>Client Files</div>
+              </div>
+              <FilesPanel supabase={supabase} currentUserEmail={userEmailProp} onClose={()=>setView("main")}/>
+            </div>
+          )}
           {view==="connect_accounting"&&(
             <div style={{padding:16,display:"flex",flexDirection:"column",gap:12}}>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
@@ -2373,6 +2548,17 @@ function SettingsMenu({actData,actName,actLast,setActData,setActName,setActLast,
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                 </svg>
                 Team Members
+              </button>
+            )}
+            {(userRole==="mainuser"||userRole==="superuser")&&(
+              <button onClick={()=>setView("files")}
+                style={{width:"100%",padding:"11px 20px",background:"transparent",border:"none",
+                  borderTop:"1px solid #0f1e30",color:"#94a3b8",fontSize:12,cursor:"pointer",
+                  textAlign:"left",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",gap:11}}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+                </svg>
+                Client Files
               </button>
             )}
             <button onClick={doSignOut}
