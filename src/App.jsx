@@ -250,7 +250,7 @@ const Gauge = ({label,value,unit,target,targetLabel,color,desc,flip}) => {
   );
 };
 
-const TblHead = ({visMonths,monthTypes,totalLabel,stickyBg,simple}) => {
+const TblHead = ({visMonths,monthTypes,totalLabel,stickyBg,simple,compLabel="BUD"}) => {
   if(simple) return (
     <thead><tr style={{borderBottom:"1px solid #1e2d45",background:"#070c17"}}>
       <th style={{textAlign:"left",padding:"10px 20px",color:SLATE,fontWeight:500,minWidth:190,position:"sticky",left:0,background:stickyBg||"#0c1420",zIndex:2}}>Line Item</th>
@@ -271,11 +271,10 @@ const TblHead = ({visMonths,monthTypes,totalLabel,stickyBg,simple}) => {
       <tr style={{borderBottom:"1px solid #1e2d45",background:"#070c17"}}>
         <th style={{position:"sticky",left:0,background:"#070c17",zIndex:2}}></th>
         {visMonths.map((_,i) => [
-          <th key={"a"+i} style={{padding:"4px 8px",fontSize:9,fontWeight:600,textAlign:"right",color:BLUE,background:"#060d1a",letterSpacing:"0.05em"}}>ACT</th>,
-          <th key={"c"+i} style={{padding:"4px 8px",fontSize:9,fontWeight:600,textAlign:"right",color:AMBER,background:"#0d0a00",letterSpacing:"0.05em"}}>BUD</th>,
+          <th key={"a"+i} style={{padding:"4px 8px",fontSize:9,fontWeight:600,textAlign:"right",color:monthTypes[i]==="ACT"?BLUE:AMBER,background:"#060d1a",letterSpacing:"0.05em"}}>{monthTypes[i]==="ACT"?"ACT":compLabel}</th>,
         ])}
-        {["ACT","BUD","VAR"].map(h => (
-          <th key={h} style={{padding:"4px 8px",fontSize:9,fontWeight:600,textAlign:"right",color:h==="ACT"?BLUE:h==="BUD"?AMBER:RED,letterSpacing:"0.05em"}}>{h}</th>
+        {["ACT",compLabel,"VAR"].map(h => (
+          <th key={h} style={{padding:"4px 8px",fontSize:9,fontWeight:600,textAlign:"right",color:h==="ACT"?BLUE:h==="VAR"?RED:AMBER,letterSpacing:"0.05em"}}>{h}</th>
         ))}
       </tr>
     </thead>
@@ -362,9 +361,9 @@ function BillingView({clientName, supabase, onClose, userEmail=""}) {
   const STRIPE_KEY = "PASTE_STRIPE_PUBLISHABLE_KEY";
 
   const PACKAGES = [
-    {id:"spark",   name:"Spark",   credits:200,  price:"€10", priceId:"price_spark_10eur",   desc:"200 questions",  color:"#60a5fa"},
-    {id:"insight", name:"Insight", credits:400,  price:"€20", priceId:"price_insight_20eur", desc:"400 questions",  color:"#a78bfa"},
-    {id:"oracle",  name:"Oracle",  credits:1000, price:"€50", priceId:"price_oracle_50eur",  desc:"1 000 questions",color:"#2dd4bf"},
+    {id:"spark",   name:"Spark",   credits:200,  price:"€10", priceId:"price_1TBr8936nlMWZMRYRFZb0mAv", desc:"200 questions",  color:"#60a5fa"},
+    {id:"insight", name:"Insight", credits:400,  price:"€20", priceId:"price_1TBr9B36nlMWZMRYjnbtW4iB", desc:"400 questions",  color:"#a78bfa"},
+    {id:"oracle",  name:"Oracle",  credits:1000, price:"€50", priceId:"price_1TBr9o36nlMWZMRYypTwoHC2", desc:"1 000 questions",color:"#2dd4bf"},
   ];
 
   React.useEffect(()=>{
@@ -3028,8 +3027,8 @@ function ForecastTab({actuals,comp,compLabel,mode,setMode,S,E,fcRevData,fcEqData
                   <XAxis dataKey="month" tick={{fontSize:10,fill:SLATE}} axisLine={false} tickLine={false}/>
                   <YAxis tick={{fontSize:10,fill:SLATE}} axisLine={false} tickLine={false} tickFormatter={v=>"€"+(v/1e3).toFixed(0)+"K"}/>
                   <Tooltip content={<Tt/>}/>
-                  <Line type="monotone" dataKey={ch.k1} stroke={ch.c1} strokeWidth={2} dot={false} name="ACT"/>
-                  <Line type="monotone" dataKey={ch.k2} stroke={ch.c2} strokeWidth={2} dot={false} strokeDasharray="4 4" name={compLabel}/>
+                  <Line type="monotone" dataKey={ch.k1} stroke={ch.c1} strokeWidth={2} dot={false} name="ACT" connectNulls={false}/>
+                  <Line type="monotone" dataKey={ch.k2} stroke={ch.c2} strokeWidth={2} dot={false} strokeDasharray="4 4" name={compLabel} connectNulls={false}/>
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -3288,7 +3287,7 @@ function PLTab({actuals,comp,compLabel,mode,setMode,S,E,visMonths,monthTypes,plR
       <div style={{background:"#0c1420",border:"1px solid #0f1e30",borderRadius:12,overflow:"hidden"}}>
         <div style={{overflowX:"auto"}}>
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,fontFamily:"'DM Mono',monospace"}}>
-            <TblHead visMonths={visMonths} monthTypes={monthTypes} totalLabel={MONTHS_A[S]+"–"+MONTHS_A[E]}/>
+            <TblHead visMonths={visMonths} monthTypes={monthTypes} totalLabel={MONTHS_A[S]+"–"+MONTHS_A[E]} compLabel={compLabel}/>
             <tbody>
               {plRows.map((r,ri)=>(
                 <TblRow key={ri} label={r.label} actArr={actuals[r.ak]||[]} compArr={r.ck?comp[r.ck]:null} color={r.color} bold={r.bold} indent={r.indent} s={S} e={E} monthTypes={monthTypes}/>
@@ -3310,8 +3309,8 @@ function BalanceTab({actuals,comp,compLabel,mode,setMode,S,E,visMonths,monthType
   const endDebt = (actuals.ltDebt[E]||0)+(actuals.stDebt[E]||0);
   const endAss  = totAss[E]||0;
   const endLiab = totLiab[E]||0;
-  const eqR     = (endEq+endDebt) ? (endEq/(endEq+endDebt)*100).toFixed(1) : 0;
-  const gear    = endEq ? (endDebt/endEq*100).toFixed(1) : 0;
+  const eqR     = endAss ? (endEq/endAss*100).toFixed(1) : 0;  // equity / total assets
+  const gear    = endEq  ? (endDebt/endEq*100).toFixed(1) : 0; // net debt / equity
 
   const chartData = MONTHS_A.map((m,i)=>({
     month:m,
@@ -3389,7 +3388,7 @@ function BalanceTab({actuals,comp,compLabel,mode,setMode,S,E,visMonths,monthType
       <div style={{background:"#0c1420",border:"1px solid #0f1e30",borderRadius:12,overflow:"hidden"}}>
         <div style={{overflowX:"auto"}}>
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,fontFamily:"'DM Mono',monospace"}}>
-            <TblHead visMonths={visMonths} monthTypes={monthTypes} totalLabel="End of period"/>
+            <TblHead visMonths={visMonths} monthTypes={monthTypes} totalLabel="End of period" compLabel={compLabel}/>
             <tbody>
               {balRows.map((r,ri)=>{
                 if(r.spacer){
@@ -3888,21 +3887,22 @@ function Dashboard() {
   const eqDebtData=MONTHS.map((m,i)=>({month:m,equity:actuals.equity[i],debt:(actuals.ltDebt[i]||0)+(actuals.stDebt[i]||0)}));
   const gearData  =MONTHS.map((m,i)=>({month:m,gearing:actuals.equity[i]?+(((actuals.ltDebt[i]||0)+(actuals.stDebt[i]||0))/actuals.equity[i]*100).toFixed(1):0}));
   const effData   =MONTHS.map((m,i)=>({month:m,dso:actuals.revenue[i]?+(actuals.receivables[i]/(actuals.revenue[i]/30)).toFixed(0):0}));
+  // Trajectory: single line - ACT up to actLast, then comp/est continues
   const fcRevData =MONTHS.map((m,i)=>({
     month:m,
     act:  i<=actLast ? (actuals.revenue[i]||0) : null,
-    comp: i>=actLast ? (i===actLast?(actuals.revenue[i]||0):(comp.revenue||[])[i]||0) : null,
+    comp: i> actLast ? ((comp.revenue||[])[i]||0) : null,
   }));
   const fcEqData  =MONTHS.map((m,i)=>({
     month:m,
     act:  i<=actLast ? (actuals.equity[i]||0) : null,
-    comp: i>=actLast ? (i===actLast?(actuals.equity[i]||0):(comp.equity||[])[i]||0) : null,
+    comp: i> actLast ? ((comp.equity||[])[i]||0) : null,
   }));
   const _lastActCash=actuals.cash[actLast]||0;
   const fcCashData=MONTHS.map((m,i)=>({
     month:m,
     act:  i<=actLast ? (actuals.cash[i]||0) : null,
-    comp: i>=actLast ? (i===actLast?_lastActCash:(_lastActCash+(comp.cash||[])[i]-((comp.cash||[])[actLast]||0))) : null,
+    comp: i> actLast ? ((comp.cash||[])[i]||0) : null,
   }));
     // ── CASH FLOW — indirect method, hybrid residual ──────────────────────────
   // Opening cash: use prior year Dec if available, else back-derive from month 1
@@ -4383,7 +4383,10 @@ function Dashboard() {
 
   const totCurr=MONTHS.map((_,i)=>(actuals.inventory[i]||0)+(actuals.receivables[i]||0)+(actuals.cash[i]||0)+(actuals.otherCA?actuals.otherCA[i]:0));
   const totAss =MONTHS.map((_,i)=>(actuals.tangibles?actuals.tangibles[i]:0)+totCurr[i]);
-  const totLiab=MONTHS.map((_,i)=>(actuals.ltDebt[i]||0)+(actuals.stDebt[i]||0)+(actuals.payables[i]||0)+(actuals.otherCL[i]||0));
+  // totLiab = all liabilities excluding equity (for liabilities side of balance)
+  const totExtLiab=MONTHS.map((_,i)=>(actuals.ltDebt[i]||0)+(actuals.stDebt[i]||0)+(actuals.payables[i]||0)+(actuals.otherCL[i]||0));
+  // totLiab passed to BalanceTab = equity + all liabilities (should equal totAss)
+  const totLiab=MONTHS.map((_,i)=>(actuals.equity[i]||0)+totExtLiab[i]);
   const balRows=[
     {spacer:"ASSETS"},
     {label:"Tangible assets",   ak:"tangibles",   ck:null,          color:SLATE,indent:true},
@@ -4418,8 +4421,13 @@ function Dashboard() {
   const ccfDLT =MONTHS.map((_,i)=> _dc('ltDebt',i));
   const ccfDST =MONTHS.map((_,i)=> _dc('stDebt',i));
   const ccfFin =MONTHS.map((_,i)=>ccfDLT[i]+ccfDST[i]);
-  const ccfOpen=MONTHS.map((_,i)=>i===0?(actuals.cash[actLast]||0):(comp.cash?.[i-1]||0));
-  const ccfClose=MONTHS.map((_,i)=>comp.cash?.[i]||0);
+  // Opening cash for comp months: starts from last ACT cash, chains through comp
+  const ccfOpen=MONTHS.map((_,i)=>{
+    if(i<=actLast) return actuals.cash[i>0?i-1:0]||0;
+    if(i===actLast+1) return actuals.cash[actLast]||0;
+    return comp.cash?.[i-1]||actuals.cash[actLast]||0;
+  });
+  const ccfClose=MONTHS.map((_,i)=>i<=actLast?(actuals.cash[i]||0):(comp.cash?.[i]||actuals.cash[actLast]||0));
   const ccfInv =MONTHS.map((_,i)=>{const dCash=(comp.cash?.[i]||0)-ccfOpen[i];return dCash-ccfOp[i]-ccfFin[i];});
   const ccfNet =MONTHS.map((_,i)=>ccfOp[i]+ccfInv[i]+ccfFin[i]);
   const h=(aA,cA,i)=>i<=actLast?(aA[i]||0):(cA[i]||0);
