@@ -3859,6 +3859,9 @@ function Dashboard() {
   const S=startM,E=endM;
   const visMonths  = MONTHS.slice(S,E+1);
   const monthTypes = visMonths.map((_,ii)=>(S+ii)<=actLast?"ACT":compLabel);
+  // For trajectory tabs (PL, Balance): always show full year so comp months are visible
+  const fullMonths  = MONTHS.slice(0,12);
+  const fullTypes   = fullMonths.map((_,ii)=>ii<=actLast?"ACT":compLabel);
 
   const totRev  = sum(sl(actuals.revenue,S,E));
   const totGP   = sum(sl(actuals.grossProfit,S,E));
@@ -4661,11 +4664,11 @@ function Dashboard() {
         )}
 
         {tab==="pl"&&(
-          <PLTab actuals={actuals} comp={comp} compLabel={compLabel} mode={mode} setMode={setMode} S={S} E={E} visMonths={visMonths} monthTypes={monthTypes} plRows={plRows} year={year} actLast={actLast}/>
+          <PLTab actuals={actuals} comp={comp} compLabel={compLabel} mode={mode} setMode={setMode} S={0} E={11} visMonths={fullMonths} monthTypes={fullTypes} plRows={plRows} year={year} actLast={actLast}/>
         )}
 
         {tab==="balance"&&(
-          <BalanceTab actuals={actuals} comp={comp} compLabel={compLabel} mode={mode} setMode={setMode} S={S} E={E} visMonths={visMonths} monthTypes={monthTypes} balRows={balRows} year={year} totCurr={totCurr} totAss={totAss} totLiab={totLiab}/>
+          <BalanceTab actuals={actuals} comp={comp} compLabel={compLabel} mode={mode} setMode={setMode} S={0} E={11} visMonths={fullMonths} monthTypes={fullTypes} balRows={balRows} year={year} totCurr={totCurr} totAss={totAss} totLiab={totLiab}/>
         )}
 
         {tab==="cashflow"&&(
