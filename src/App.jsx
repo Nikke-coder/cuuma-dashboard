@@ -969,7 +969,7 @@ Financial data for this company only (${financialContext.period}, ${financialCon
         <input ref={inputRef} value={input} onChange={e=>setInput(e.target.value)}
           onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}}}
           placeholder="Ask EBITDA-9000…"
-          style={{flex:1,background:T.bgCard,border:"1px solid #1e2d45",borderRadius:12,padding:"8px 10px",color:T.text,fontSize:11,outline:"none",fontFamily:"'DM Sans',sans-serif"}}
+          style={{flex:1,background:T.bgCard,border:"1px solid "+T.border,borderRadius:12,padding:"8px 10px",color:T.text,fontSize:11,outline:"none",fontFamily:"'DM Sans',sans-serif"}}
           onFocus={e=>e.target.style.borderColor="#8b5cf6"}
           onBlur={e=>e.target.style.borderColor=T.border}
         />
@@ -3806,10 +3806,10 @@ function CommentsPanel({supabase, clientName, userName, enabled}) {
       {open&&(
         <div style={{position:"absolute",top:42,right:0,width:340,height:500,
           display:"flex",flexDirection:"column",background:"#080e1c",
-          border:"1px solid #1a3a2a",borderRadius:14,boxShadow:"0 16px 60px #000a",overflow:"hidden",zIndex:2000}}>
+          border:"1px solid "+T.border,borderRadius:14,boxShadow:"0 16px 60px #000a",overflow:"hidden",zIndex:2000}}>
           <div style={{padding:"14px 18px",borderBottom:"1px solid "+T.border,
             display:"flex",alignItems:"center",justifyContent:"space-between",
-            background:"linear-gradient(135deg,#0a1e12,#060e0a)",flexShrink:0}}>
+            background:T.bgPanel,flexShrink:0}}>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
               <div style={{width:30,height:30,borderRadius:"50%",background:"linear-gradient(135deg,#0f4c2a,#16a34a)",
                 display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>💬</div>
@@ -3843,8 +3843,8 @@ function CommentsPanel({supabase, clientName, userName, enabled}) {
                   <div style={{maxWidth:"85%",padding:"9px 12px",
                     borderRadius:isMe?"12px 12px 2px 12px":"12px 12px 12px 2px",
                     background:isMe?T.accentLo+"22":T.bgCard,
-                    border:"1px solid "+(isMe?"#3b82f655":"#16a34a33"),
-                    fontSize:12,color:"#d1d5db",lineHeight:1.5}}>
+                    border:"1px solid "+(isMe?T.accentLo+"44":T.border),
+                    fontSize:12,color:T.text,lineHeight:1.5}}>
                     {c.body}
                   </div>
                 </div>
@@ -3857,7 +3857,7 @@ function CommentsPanel({supabase, clientName, userName, enabled}) {
             <input ref={inputRef} value={input} onChange={e=>setInput(e.target.value)}
               onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();post();}}}
               placeholder="Add a comment…"
-              style={{flex:1,background:T.bgCard,border:"1px solid #1e2d45",borderRadius:12,
+              style={{flex:1,background:T.bgCard,border:"1px solid "+T.border,borderRadius:12,
                 padding:"8px 12px",color:T.text,fontSize:12,outline:"none",fontFamily:"'DM Sans',sans-serif"}}
               onFocus={e=>e.target.style.borderColor="#16a34a"}
               onBlur={e=>e.target.style.borderColor=T.border}/>
