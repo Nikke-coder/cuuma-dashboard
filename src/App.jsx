@@ -4737,7 +4737,8 @@ function Dashboard() {
     {label:"Short-term debt",   ak:"stDebt",      ck:null,          color:SLATE,indent:true},
     {label:"Payables",          ak:"payables",    ck:"payables",    color:SLATE,indent:true},
     {label:"Other liabilities", ak:"otherCL",     ck:null,          color:SLATE,indent:true},
-    {label:"TOTAL LIABILITIES", aa:totLiab,       ca:compTotLiab,   color:RED,  bold:true},
+    {label:"TOTAL LIABILITIES",         aa:MONTHS.map((_,i)=>totExtLiab[i]),       ca:MONTHS.map((_,i)=>compTotExtLiab[i]),   color:RED,   bold:true},
+    {label:"TOTAL LIABILITIES & EQUITY", aa:totLiab,                                ca:compTotLiab,                           color:BLUE,  bold:true},
   ];
 
   // Comp (BUD/EST) cash flow
