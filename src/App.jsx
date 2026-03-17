@@ -272,6 +272,7 @@ const TblHead = ({visMonths,monthTypes,totalLabel,stickyBg,simple,compLabel="BUD
         <th style={{position:"sticky",left:0,background:"#070c17",zIndex:2}}></th>
         {visMonths.map((_,i) => [
           <th key={"a"+i} style={{padding:"4px 8px",fontSize:9,fontWeight:600,textAlign:"right",color:monthTypes[i]==="ACT"?BLUE:AMBER,background:"#060d1a",letterSpacing:"0.05em"}}>{monthTypes[i]==="ACT"?"ACT":compLabel}</th>,
+          <th key={"c"+i} style={{padding:"4px 8px",fontSize:9,fontWeight:600,textAlign:"right",color:AMBER,background:"#0d0a00",letterSpacing:"0.05em",opacity: monthTypes[i]==="ACT"?0.3:1}}>{compLabel}</th>,
         ])}
         {["ACT",compLabel,"VAR"].map(h => (
           <th key={h} style={{padding:"4px 8px",fontSize:9,fontWeight:600,textAlign:"right",color:h==="ACT"?BLUE:h==="VAR"?RED:AMBER,letterSpacing:"0.05em"}}>{h}</th>
