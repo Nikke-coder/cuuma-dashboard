@@ -3853,7 +3853,7 @@ function CommentsPanel({supabase, clientName, userName, enabled}) {
             {loading&&<div style={{textAlign:"center",fontSize:10,color:SLATE,fontFamily:"'DM Mono',monospace"}}>posting…</div>}
             <div ref={bottomRef}/>
           </div>
-          <div style={{padding:"10px 12px",borderTop:"1px solid "+T.border,display:"flex",gap:8,flexShrink:0,background:T.bgPanel}}>
+          <div style={{padding:"10px 12px",borderTop:"1px solid "+T.border,display:"flex",gap:8,flexShrink:0,background:T.bgCard}}>
             <input ref={inputRef} value={input} onChange={e=>setInput(e.target.value)}
               onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();post();}}}
               placeholder="Add a comment…"
@@ -3866,7 +3866,7 @@ function CommentsPanel({supabase, clientName, userName, enabled}) {
                 background:input.trim()&&!loading?"#16a34a":"#120f26",
                 border:"1px solid "+(input.trim()&&!loading?"#16a34a":T.border),
                 cursor:input.trim()&&!loading?"pointer":"not-allowed",
-                color:input.trim()&&!loading?"#fff":SLATE,fontSize:16,transition:"all 0.15s",flexShrink:0}}>
+                color:input.trim()&&!loading?"#fff":T.textMuted,fontSize:16,transition:"all 0.15s",flexShrink:0}}>
               ↑
             </button>
           </div>
