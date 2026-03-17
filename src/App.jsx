@@ -367,9 +367,9 @@ function BillingView({clientName, supabase, onClose, userEmail=""}) {
   const STRIPE_KEY = "PASTE_STRIPE_PUBLISHABLE_KEY";
 
   const PACKAGES = [
-    {id:"spark",   name:"Spark",   credits:200,  price:"€8" , priceId:"price_spark_10eur",   desc:"200 questions",  color:"#60a5fa"},
-    {id:"insight", name:"Insight", credits:400,  price:"€16", priceId:"price_insight_20eur", desc:"400 questions",  color:"#a78bfa"},
-    {id:"oracle",  name:"Oracle",  credits:1000, price:"€40", priceId:"price_oracle_50eur",  desc:"1 000 questions",color:"#2dd4bf"},
+    {id:"spark",   name:"Spark",   credits:200,  price:"€10", priceId:"price_spark_10eur",   desc:"200 questions",  color:"#60a5fa"},
+    {id:"insight", name:"Insight", credits:400,  price:"€20", priceId:"price_insight_20eur", desc:"400 questions",  color:"#a78bfa"},
+    {id:"oracle",  name:"Oracle",  credits:1000, price:"€50", priceId:"price_oracle_50eur",  desc:"1 000 questions",color:"#2dd4bf"},
   ];
 
   React.useEffect(()=>{
@@ -385,7 +385,7 @@ function BillingView({clientName, supabase, onClose, userEmail=""}) {
       setHistory(tx || []);
       setInvoices((tx||[]).filter(t=>t.type==="purchase"&&t.package&&t.package!=="manual").map(t=>({
         ...t,
-        amount: t.package==="spark"?"€8":t.package==="insight"?"€16":t.package==="oracle"?"€40":"—",
+        amount: t.package==="spark"?"€10":t.package==="insight"?"€20":t.package==="oracle"?"€50":"—",
         credits: t.credits,
         receipt_url: t.receipt_url||null,
       })));
@@ -543,7 +543,7 @@ function BillingView({clientName, supabase, onClose, userEmail=""}) {
         </div>
 
         <div style={{marginTop:8,padding:"10px 12px",background:"rgba(99,102,241,0.06)",border:"1px solid rgba(99,102,241,0.2)",borderRadius:8}}>
-          <div style={{fontSize:10,color:"#6366f1",fontFamily:"'DM Mono',monospace"}}>ℹ Credits never expire · Secure payment via Stripe · VAT 0%</div>
+          <div style={{fontSize:10,color:"#6366f1",fontFamily:"'DM Mono',monospace"}}>ℹ Credits never expire · Secure payment via Stripe · Prices VAT 0%</div>
         </div>
       </div>
     </div>
@@ -3205,7 +3205,7 @@ function ModeSwitcher({mode,setMode,compLabel}) {
 }
 
 // ── P&L Tab ──────────────────────────────────────────────────────────────────
-function PLTab({actuals,comp,compLabel,mode,setMode,S,E,visMonths,monthTypes,plRows,year}) {
+function PLTab({actuals,comp,compLabel,mode,setMode,S,E,visMonths,monthTypes,plRows,year,actLast}) {
   const sum = a => a.reduce((s,v)=>s+v,0);
   const sl  = (arr,s,e) => arr?arr.slice(s,e+1):[];
   const fmt = v => { const a=Math.abs(v),sg=v<0?"−":""; return a>=1e6?sg+"€"+(a/1e6).toFixed(2)+"M":a>=1e3?sg+"€"+(a/1e3).toFixed(0)+"K":sg+"€"+a.toFixed(0); };
@@ -4706,7 +4706,7 @@ function Dashboard() {
         )}
 
         {tab==="pl"&&(
-          <PLTab actuals={actuals} comp={comp} compLabel={compLabel} mode={mode} setMode={setMode} S={S} E={E} visMonths={visMonths} monthTypes={monthTypes} plRows={plRows} year={year}/>
+          <PLTab actuals={actuals} comp={comp} compLabel={compLabel} mode={mode} setMode={setMode} S={S} E={E} visMonths={visMonths} monthTypes={monthTypes} plRows={plRows} year={year} actLast={actLast}/>
         )}
 
         {tab==="balance"&&(
